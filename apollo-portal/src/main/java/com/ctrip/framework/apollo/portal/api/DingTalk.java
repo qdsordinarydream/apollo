@@ -5,6 +5,8 @@ import com.ctrip.framework.apollo.common.dto.EhrMessageDTO;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,19 +16,31 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DingTalkMessage extends API {
+@Component
+public class DingTalk extends API {
     private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
     ObjectMapper objectMapper = new ObjectMapper();
 
-    public static String url = "https://oapi.dingtalk.com/robot/send";
+    @Value("${ddUrl}")
+    private String ddUrl;
 
-//    @Value("${dingding.token}")
-//    private String token;
-    public static String token = "18f9cc9e94b8790fddbfacff6805cd7ec97733e994652b791dadcab16878fb12";
+    @Value("${ddToken}")
+    private String ddToken;
+
+    @Value("${reviewHost}")
+    private String reviewHost;
+
+    @Value("${ddPicture}")
+    private String pictureUrl;
+
+    @Value("${ehrClientId}")
+    private String ehrClientId;
+
 
     // 发送 POST 请求到钉钉机器人
     public void sendDingTalkMessage(String key, String val, String appid, String clusterName, String cfGroup, String operator, int tp) {
         System.out.println("send to dingding");
+        System.out.printf("url :%s, token: %s, reviewUrl %s \n", ddUrl, ddToken, reviewHost);
 
         String ddUserId = getDDUserId(operator);
         System.out.printf("ddUserId: %s \n", ddUserId);
@@ -43,7 +57,7 @@ public class DingTalkMessage extends API {
 
         // Set up the URL and open the connection
         try {
-            URL url = new URL(DingTalkMessage.url + "?access_token=" + token);
+            URL url = new URL(ddUrl + ddToken);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             // Set the request method to POST
@@ -67,9 +81,6 @@ public class DingTalkMessage extends API {
         System.out.println("send to dingding success");
     }
 
-    public String host = "localhost:8070";
-    //static String userId = "16847239033728710";
-    static String pictureUrl = "https://picx.zhimg.com/70/v2-83050f35478311acec9c1c31dd90e908_1440w.avis?source=172ae18b&biz_tag=Post";
 
     private DingTalkMessageDTO createDingTalkMessageDTO(String key, String val, String appid, String clusterName, String cfGroup, String dd, int tp) {
         DingTalkMessageDTO dto = new DingTalkMessageDTO();
@@ -96,9 +107,9 @@ public class DingTalkMessage extends API {
 
     private String getUrl(String appid, String cluster) {
         if (!Objects.equals(cluster, "default")) {
-            return "http://" + host + "/config.html?#/appid=" + appid + "&cluster=" + cluster;
+            return "http://" + reviewHost + "/config.html?#/appid=" + appid + "&cluster=" + cluster;
         }
-        return "http://" + host + "/config.html?#/appid=" + appid;
+        return "http://" + reviewHost + "/config.html?#/appid=" + appid;
     }
 
     private String getTypeString(int type) {
@@ -114,11 +125,10 @@ public class DingTalkMessage extends API {
         }
     }
 
-    static String ClientId = "dqU8p4FUVRx6Kr9s";
     private EhrMessageDTO createEhrMessageDTO(String email) {
         EhrMessageDTO dto = new EhrMessageDTO();
         dto.setApi_time((System.currentTimeMillis() / 1000));
-        dto.setClient_id(ClientId);
+        dto.setClient_id(ehrClientId);
         dto.setEmail(email);
         dto.setApi_sign(dto.getApiSign());
         return dto;
@@ -157,7 +167,7 @@ public class DingTalkMessage extends API {
                 cache.put(email, ddUserId);
 
                 return ddUserId;
-            }else {
+            } else {
                 System.out.println("GET request not worked");
             }
         } catch (IOException e) {
