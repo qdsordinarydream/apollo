@@ -133,7 +133,7 @@ public class ItemController {
       throw BadRequestException.namespaceNotMatch();
     }
 
-    configService.deleteItem(Env.valueOf(env), itemId, userInfoHolder.getUser().getUserId());
+    configService.deleteItem(Env.valueOf(env), item, userInfoHolder.getUser().getUserId(), appId, clusterName, namespaceName);
   }
 
 

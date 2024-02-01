@@ -100,7 +100,7 @@ public class ServerItemOpenApiService implements ItemOpenApiService {
   public void removeItem(String appId, String env, String clusterName, String namespaceName,
       String key, String operator) {
     ItemDTO toDeleteItem = this.itemService.loadItem(Env.valueOf(env), appId, clusterName, namespaceName, key);
-    this.itemService.deleteItem(Env.valueOf(env), toDeleteItem.getId(), operator);
+    this.itemService.deleteItem(Env.valueOf(env), toDeleteItem, operator, appId, clusterName, namespaceName);
   }
 
   @Override

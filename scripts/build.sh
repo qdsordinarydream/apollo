@@ -16,20 +16,22 @@
 #
 
 # apollo config db info
-apollo_config_db_url='jdbc:mysql://fill-in-the-correct-server:3306/ApolloConfigDB?characterEncoding=utf8'
-apollo_config_db_username='FillInCorrectUser'
-apollo_config_db_password='FillInCorrectPassword'
+apollo_config_db_url='jdbc:mysql://10.193.217.70:3306/ApolloConfigDB?characterEncoding=utf8'
+apollo_config_db_username='root'
+apollo_config_db_password='1234'
+#apollo_config_db_password='123qwe,.'
 
 # apollo portal db info
-apollo_portal_db_url='jdbc:mysql://fill-in-the-correct-server:3306/ApolloPortalDB?characterEncoding=utf8'
-apollo_portal_db_username='FillInCorrectUser'
-apollo_portal_db_password='FillInCorrectPassword'
+apollo_portal_db_url='jdbc:mysql://10.193.217.70:3306/ApolloPortalDB?characterEncoding=utf8'
+apollo_portal_db_username='root'
+apollo_portal_db_password='1234'
+#apollo_portal_db_password='123qwe,.'
 
 # meta server url, different environments should have different meta server addresses
-dev_meta=http://fill-in-dev-meta-server:8080
-fat_meta=http://fill-in-fat-meta-server:8080
-uat_meta=http://fill-in-uat-meta-server:8080
-pro_meta=http://fill-in-pro-meta-server:8080
+dev_meta=http://127.0.0.1:8080
+fat_meta=http://127.0.0.1:8080
+uat_meta=http://127.0.0.1:8080
+pro_meta=http://127.0.0.1:8080
 
 META_SERVERS_OPTS="-Ddev_meta=$dev_meta -Dfat_meta=$fat_meta -Duat_meta=$uat_meta -Dpro_meta=$pro_meta"
 

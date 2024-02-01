@@ -150,6 +150,8 @@ public class ItemService {
   public Item save(Item entity) {
     checkItemKeyLength(entity.getKey());
     checkItemType(entity.getType());
+
+    System.out.printf("getValue: %s \n", entity.getValue());
     checkItemValueLength(entity.getNamespaceId(), entity.getValue());
 
     entity.setId(0);//protection
@@ -204,6 +206,8 @@ public class ItemService {
 
   private boolean checkItemValueLength(long namespaceId, String value) {
     int limit = getItemValueLengthLimit(namespaceId);
+    System.out.printf("加载的 limit 为: %d \n", limit);
+
     Namespace currentNamespace = namespaceService.findOne(namespaceId);
     if(currentNamespace != null) {
       Matcher m = clusterPattern.matcher(currentNamespace.getClusterName());

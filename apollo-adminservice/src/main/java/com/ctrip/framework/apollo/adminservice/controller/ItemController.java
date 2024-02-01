@@ -71,12 +71,14 @@ public class ItemController {
   public ItemDTO create(@PathVariable("appId") String appId,
                         @PathVariable("clusterName") String clusterName,
                         @PathVariable("namespaceName") String namespaceName, @RequestBody ItemDTO dto) {
+    System.out.printf("入参的value: %s", dto.getValue());
     Item entity = BeanUtils.transform(Item.class, dto);
 
     Item managedEntity = itemService.findOne(appId, clusterName, namespaceName, entity.getKey());
     if (managedEntity != null) {
       throw BadRequestException.itemAlreadyExists(entity.getKey());
     }
+
     entity = itemService.save(entity);
     dto = BeanUtils.transform(ItemDTO.class, entity);
     commitService.createCommit(appId, clusterName, namespaceName, new ConfigChangeContentBuilder().createItem(entity).build(),
