@@ -40,7 +40,7 @@ public class DingTalk extends API {
     // 发送 POST 请求到钉钉机器人
     public void sendDingTalkMessage(String key, String val, String appid, String clusterName, String cfGroup, String operator, int tp) {
         System.out.println("send to dingding");
-        System.out.printf("url :%s, token: %s, reviewUrl %s \n", ddUrl, ddToken, reviewHost);
+        System.out.printf("url: %s, token: %s, reviewUrl: %s \n", ddUrl, ddToken, reviewHost);
 
         String ddUserId = getDDUserId(operator);
         System.out.printf("ddUserId: %s \n", ddUserId);
