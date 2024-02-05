@@ -48,7 +48,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.HttpClientErrorException;
-import com.ctrip.framework.apollo.portal.api.DingTalk;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +63,6 @@ public class ItemService {
     private final AdminServiceAPI.ReleaseAPI releaseAPI;
     private final ConfigTextResolver fileTextResolver;
     private final ConfigTextResolver propertyResolver;
-    private final DingTalk dingTalk;
 
     public ItemService(
             final UserInfoHolder userInfoHolder,
@@ -72,15 +70,13 @@ public class ItemService {
             final ItemAPI itemAPI,
             final ReleaseAPI releaseAPI,
             final @Qualifier("fileTextResolver") ConfigTextResolver fileTextResolver,
-            final @Qualifier("propertyResolver") ConfigTextResolver propertyResolver,
-            DingTalk dingTalk) {
+            final @Qualifier("propertyResolver") ConfigTextResolver propertyResolver) {
         this.userInfoHolder = userInfoHolder;
         this.namespaceAPI = namespaceAPI;
         this.itemAPI = itemAPI;
         this.releaseAPI = releaseAPI;
         this.fileTextResolver = fileTextResolver;
         this.propertyResolver = propertyResolver;
-        this.dingTalk = dingTalk;
     }
 
 
@@ -125,14 +121,6 @@ public class ItemService {
 
         updateItems(appId, env, clusterName, namespaceName, changeSets);
 
-        // 遍历 changeSets 的 createItems，发送钉钉通知
-        for (ItemDTO itemDTO : changeSets.getCreateItems()) {
-            System.out.printf("text key: %s, value: %s\n", itemDTO.getKey(), itemDTO.getValue());
-            dingTalk.sendDingTalkMessage(itemDTO.getKey(), itemDTO.getValue(), appId, clusterName, namespaceName, operator, 1);
-        }
-        // 发送钉钉通知
-        //dingTalkMessage.sendDingTalkMessage(itemDTO.getKey(), itemDTO.getValue(), appId, 1);
-
         Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE_BY_TEXT,
                 String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
         Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
@@ -152,9 +140,6 @@ public class ItemService {
 
         ItemDTO itemDTO = itemAPI.createItem(appId, env, clusterName, namespaceName, item);
 
-        // 发送钉钉通知
-        dingTalk.sendDingTalkMessage(itemDTO.getKey(), itemDTO.getValue(), appId, clusterName, namespaceName, item.getDataChangeCreatedBy(), 1);
-
         Tracer.logEvent(TracerEventType.MODIFY_NAMESPACE, String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
         return itemDTO;
     }
@@ -171,16 +156,10 @@ public class ItemService {
 
     public void updateItem(String appId, Env env, String clusterName, String namespaceName, ItemDTO item) {
         itemAPI.updateItem(appId, env, clusterName, namespaceName, item.getId(), item);
-
-        // 发送钉钉通知
-        dingTalk.sendDingTalkMessage(item.getKey(), item.getValue(), appId, clusterName, namespaceName, item.getDataChangeLastModifiedBy(),2);
     }
 
-    public void deleteItem(Env env, ItemDTO item, String userId, String appId, String clusterName, String namespaceName) {
+    public void deleteItem(Env env, ItemDTO item, String userId) {
         itemAPI.deleteItem(env, item.getId(), userId);
-
-        // 发送钉钉通知
-        dingTalk.sendDingTalkMessage(item.getKey(), item.getValue(), appId, clusterName, namespaceName, userId, 3);
     }
 
     public List<ItemDTO> findItems(String appId, Env env, String clusterName, String namespaceName) {

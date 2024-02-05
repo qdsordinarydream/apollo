@@ -21,8 +21,31 @@ import com.ctrip.framework.apollo.common.entity.EntityPair;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ReleaseHistoryBO {
+  @Override
+  public String toString() {
+    return "ReleaseHistoryBO{" +
+            "id=" + id +
+            ", appId='" + appId + '\'' +
+            ", clusterName='" + clusterName + '\'' +
+            ", namespaceName='" + namespaceName + '\'' +
+            ", branchName='" + branchName + '\'' +
+            ", operator='" + operator + '\'' +
+            ", operatorDisplayName='" + operatorDisplayName + '\'' +
+            ", releaseId=" + releaseId +
+            ", releaseTitle='" + releaseTitle + '\'' +
+            ", releaseComment='" + releaseComment + '\'' +
+            ", releaseTime=" + releaseTime +
+            ", releaseTimeFormatted='" + releaseTimeFormatted + '\'' +
+            ", configuration=" + (configuration == null ? "null" : configuration.stream().map(Object::toString).collect(Collectors.joining(", "))) +
+            ", isReleaseAbandoned=" + isReleaseAbandoned +
+            ", previousReleaseId=" + previousReleaseId +
+            ", operation=" + operation +
+            ", operationContext=" + operationContext +
+            '}';
+  }
 
   private long id;
 

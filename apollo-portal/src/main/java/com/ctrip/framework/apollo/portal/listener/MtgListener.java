@@ -1,17 +1,19 @@
 package com.ctrip.framework.apollo.portal.listener;
 
-import com.ctrip.framework.apollo.common.dto.DingTalkMessageDTO;
 import com.ctrip.framework.apollo.common.dto.EhrMessageDTO;
 import com.ctrip.framework.apollo.portal.api.API;
 import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
 import com.ctrip.framework.apollo.portal.entity.bo.ReleaseHistoryBO;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.dingtalk.api.DefaultDingTalkClient;
+import com.dingtalk.api.DingTalkClient;
+import com.dingtalk.api.request.OapiRobotSendRequest;
+import com.dingtalk.api.response.OapiRobotSendResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.taobao.api.ApiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -20,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class MtgListener extends API {
     private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
-    ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${ddUrl}")
     private String ddUrl;
@@ -57,36 +58,9 @@ public class MtgListener extends API {
 
         System.out.printf("ddUserId: %s \n", ddUserIds);
 
-        // Create JSON payload
-        DingTalkMessageDTO dto = createDingTalkMessageDTO(releaseHistory, publishInfo, ddUserIds);
-        String jsonPayload;
         try {
-            jsonPayload = objectMapper.writeValueAsString(dto);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        // Set up the URL and open the connection
-        try {
-            URL url = new URL(ddUrl + ddToken);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            // Set the request method to POST
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-
-            // Write JSON payload to the connection's output stream
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonPayload.getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
-
-            // Get the response code
-            int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
-        } catch (IOException e) {
+            sendMsg(releaseHistory, publishInfo, ddUserIds);
+        } catch (ApiException e) {
             e.printStackTrace();
         }
 
@@ -94,32 +68,46 @@ public class MtgListener extends API {
     }
 
 
-    private DingTalkMessageDTO createDingTalkMessageDTO(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, Map<String, String> dd) {
-        DingTalkMessageDTO dto = new DingTalkMessageDTO();
-        List<String> opreators = new ArrayList<>(dd.keySet());
+    // 发送钉钉机器人群通知
+    // https://open.dingtalk.com/document/robots/custom-robot-access
+    private void sendMsg(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, Map<String, String> dd) throws ApiException {
+        List<String> operators = new ArrayList<>(dd.keySet());
         if (publishInfo.getChangeItems() == null) {
             publishInfo.setChangeItems(new ArrayList<>());
         }
 
-        dto.setMsgtype("markdown");
-        DingTalkMessageDTO.Markdown md = new DingTalkMessageDTO.Markdown();
+        DingTalkClient client = new DefaultDingTalkClient(ddUrl + ddToken);
+        OapiRobotSendRequest req = new OapiRobotSendRequest();
+        // 设置对应类型
+        req.setMsgtype("markdown");
+        // 设置标题
+        OapiRobotSendRequest.Markdown markdown = new OapiRobotSendRequest.Markdown();
         String tps = getTypeString(publishInfo.isRollbackEvent());
-        md.setTitle(tps);
-        md.setText(
-                "#### **" + tps + "** \n " +
-                        "#### ***操作人***: " + getOperator(opreators) + " \n " +
-                        "#### ***发布人***: " + releaseHistory.getOperator() + " \n " +
-                        "#### ***Appid***: " + releaseHistory.getAppId() + " \n " +
-                        "#### ***Cluster***: " + releaseHistory.getClusterName() + " \n " +
-                        "#### ***ConfigGroup***: " + releaseHistory.getNamespaceName() + " \n " +
-                        "#### ***变更内容***: " + publishInfo.getChangeItems().toString() + " \n " +
-                        "> ![screenshot](" + pictureUrl + ") \n " +
-                        "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n");
-        dto.setMarkdown(md);
-        DingTalkMessageDTO.At at = new DingTalkMessageDTO.At();
-        at.setAtUserIds(opreators);
-        dto.setAt(at);
-        return dto;
+        markdown.setTitle(tps);
+        // 设置内容
+        markdown.setText(createMarkdownContent(releaseHistory, publishInfo, operators));
+        req.setMarkdown(markdown);
+        // 设置@人
+        OapiRobotSendRequest.At at = new OapiRobotSendRequest.At();
+        at.setAtUserIds(operators);
+        req.setAt(at);
+
+        // 发送请求
+        OapiRobotSendResponse response = client.execute(req);
+
+        System.out.println(response.getBody());
+    }
+
+    private String createMarkdownContent(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, List<String> operators) {
+        return "#### **" + getTypeString(publishInfo.isRollbackEvent()) + "** \n " +
+                "#### ***操作人***: " + getOperator(operators) + " \n " +
+                "#### ***发布人***: " + releaseHistory.getOperator() + " \n " +
+                "#### ***Appid***: " + releaseHistory.getAppId() + " \n " +
+                "#### ***Cluster***: " + releaseHistory.getClusterName() + " \n " +
+                "#### ***ConfigGroup***: " + releaseHistory.getNamespaceName() + " \n " +
+                "#### ***变更内容***: " + publishInfo.getChangeItems().toString() + " \n " +
+                "> ![screenshot](" + pictureUrl + ") \n " +
+                "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }
 
     private String getOperator(List<String> dds) {
