@@ -18,6 +18,7 @@ package com.ctrip.framework.apollo.portal.listener;
 
 import com.ctrip.framework.apollo.common.constants.ReleaseOperation;
 import com.ctrip.framework.apollo.portal.component.ConfigReleaseWebhookNotifier;
+import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
 import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.core.utils.ApolloThreadFactory;
 import com.ctrip.framework.apollo.portal.component.config.PortalConfig;
@@ -53,16 +54,18 @@ public class ConfigPublishListener {
 
   private ExecutorService executorService;
 
+  private final MtgListener mtgListener;
+
   public ConfigPublishListener(
-      final ReleaseHistoryService releaseHistoryService,
-      final EmailService emailService,
-      final NormalPublishEmailBuilder normalPublishEmailBuilder,
-      final GrayPublishEmailBuilder grayPublishEmailBuilder,
-      final RollbackEmailBuilder rollbackEmailBuilder,
-      final MergeEmailBuilder mergeEmailBuilder,
-      final PortalConfig portalConfig,
-      final MQService mqService,
-      final ConfigReleaseWebhookNotifier configReleaseWebhookNotifier) {
+          final ReleaseHistoryService releaseHistoryService,
+          final EmailService emailService,
+          final NormalPublishEmailBuilder normalPublishEmailBuilder,
+          final GrayPublishEmailBuilder grayPublishEmailBuilder,
+          final RollbackEmailBuilder rollbackEmailBuilder,
+          final MergeEmailBuilder mergeEmailBuilder,
+          final PortalConfig portalConfig,
+          final MQService mqService,
+          final ConfigReleaseWebhookNotifier configReleaseWebhookNotifier, MtgListener mtgListener) {
     this.releaseHistoryService = releaseHistoryService;
     this.emailService = emailService;
     this.normalPublishEmailBuilder = normalPublishEmailBuilder;
@@ -72,6 +75,7 @@ public class ConfigPublishListener {
     this.portalConfig = portalConfig;
     this.mqService = mqService;
     this.configReleaseWebhookNotifier = configReleaseWebhookNotifier;
+    this.mtgListener = mtgListener;
   }
 
   @PostConstruct
@@ -100,6 +104,9 @@ public class ConfigPublishListener {
         Tracer.logError("Load release history failed", null);
         return;
       }
+      System.out.println("releaseHistory :");
+      System.out.println(releaseHistory);
+      mtgListener.sendDingTalkMessage(releaseHistory, publishInfo);
 
       this.sendPublishWebHook(releaseHistory);
 

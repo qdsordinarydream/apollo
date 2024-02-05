@@ -17,6 +17,13 @@
 package com.ctrip.framework.apollo.common.entity;
 
 public class EntityPair<E> {
+  @Override
+  public String toString() {
+    return "{" +
+            "key=" + firstEntity +
+            ", valu=" + secondEntity +
+            '}';
+  }
 
   private E firstEntity;
   private E secondEntity;
