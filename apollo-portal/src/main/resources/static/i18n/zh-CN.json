@@ -182,6 +182,8 @@
   "Component.Namespace.Master.Items.ChangedUser": "当前修改者",
   "Component.Namespace.Master.Items.Publish": "发布",
   "Component.Namespace.Master.Items.PublishTips": "发布配置",
+  "Component.Namespace.Master.Items.ReviewSender": "通知审核",
+  "Component.Namespace.Master.Items.ReviewSenderTips": "给审核人发“钉钉”通知",
   "Component.Namespace.Master.Items.Rollback": "回滚",
   "Component.Namespace.Master.Items.RollbackTips": "回滚已发布配置",
   "Component.Namespace.Master.Items.PublishHistory": "发布历史",

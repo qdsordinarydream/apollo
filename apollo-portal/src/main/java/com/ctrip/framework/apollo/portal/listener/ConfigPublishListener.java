@@ -104,9 +104,14 @@ public class ConfigPublishListener {
         Tracer.logError("Load release history failed", null);
         return;
       }
+
       System.out.println("releaseHistory :");
       System.out.println(releaseHistory);
-      mtgListener.sendDingTalkMessage(releaseHistory, publishInfo);
+
+      // 灰度发版不通知
+      if (releaseHistory.getOperation() != 2) {
+        mtgListener.sendDingTalkMessage(releaseHistory, publishInfo);
+      }
 
       this.sendPublishWebHook(releaseHistory);
 

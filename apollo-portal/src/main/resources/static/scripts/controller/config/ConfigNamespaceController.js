@@ -39,6 +39,8 @@ function controller($rootScope, $scope, $translate, toastr, AppUtil, EventManage
     $scope.lockCheck = lockCheck;
     $scope.emergencyPublish = emergencyPublish;
 
+    $scope.promptReview = promptReview;
+
     init();
 
     function init() {
@@ -178,6 +180,13 @@ function controller($rootScope, $scope, $translate, toastr, AppUtil, EventManage
 
     function rollback() {
         EventManager.emit(EventManager.EventType.ROLLBACK_NAMESPACE);
+    }
+
+    function promptReview(namespace) {
+        NamespaceService.promptReview($rootScope.pageContext.appId,
+            $rootScope.pageContext.env,
+            $rootScope.pageContext.clusterName,
+            namespace.baseInfo.namespaceName);
     }
 
     $scope.tableViewOperType = '', $scope.item = {};

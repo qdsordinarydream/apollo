@@ -89,7 +89,7 @@ public class ReviewNotificationSender extends API {
         // 获取token
         String accessToken;
         if (cache.containsKey(ddAppKey + ddAppSecret)) {
-            System.out.println("走了缓存");
+            System.out.println("token 走了缓存");
             accessToken = cache.get(ddAppKey + ddAppSecret);
         } else {
             accessToken = getToken(ddAppKey, ddAppSecret);
@@ -100,6 +100,7 @@ public class ReviewNotificationSender extends API {
         OapiMessageCorpconversationAsyncsendV2Response rsp = client.execute(request, accessToken);
         // token 过期，重新获取
         if (Objects.equals(rsp.getSubCode(), "40014")) {
+            System.out.println("token 缓存失效，重新获取");
             accessToken = getToken(ddAppKey, ddAppSecret);
             cache.put(ddAppKey + ddAppSecret, accessToken);
             rsp = client.execute(request, accessToken);
@@ -129,10 +130,10 @@ public class ReviewNotificationSender extends API {
         msg.getMarkdown().setText(
                 "#### **" + "配置中心有“数据修改”待您审核发布" + "** \n " +
                         "#### ***修改人***: [" + joiner.toString() + "] \n " +
-                        "#### ***Appid***: " + appid + " \n " +
-                        "#### ***Cluster***: " + clusterName + " \n " +
-                        "#### ***configGroup***: " + cfGroup + " \n " +
-                        "#### ***修改详情***:" + items.toString() + " \n " +
+                        "#### ***Appid***: [" + appid + "] \n " +
+                        "#### ***Cluster***: [" + clusterName + "] \n " +
+                        "#### ***ConfigGroup***: [" + cfGroup + "] \n " +
+                        "#### ***修改详情***: " + items.toString() + " \n " +
                         "> ![screenshot](" + pictureUrl + ") \n " +
                         "> ###### 信息审核 => [地址](" + getUrl(appid, clusterName) + ") \n");
 
@@ -157,7 +158,7 @@ public class ReviewNotificationSender extends API {
 
     public String getDDUserId(String email) {
         if (cache.containsKey(email)) {
-            System.out.println("走了缓存");
+            System.out.println("ddId 走了缓存");
             return cache.get(email);
         }
 

@@ -17,6 +17,7 @@
 package com.ctrip.framework.apollo.portal.controller;
 
 import com.ctrip.framework.apollo.portal.service.NamespaceAuditService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,9 +38,8 @@ public class NamespaceAuditController {
                                                @PathVariable String clusterName, @PathVariable String namespaceName) {
         // 考虑通知太频繁的情况
         System.out.println("开始处理请求");
-        System.out.println("进入 audit");
         namespaceAuditService.sendMsg(appId, env, clusterName, namespaceName);
-        return ResponseEntity.ok("ok");
+        return ResponseEntity.ok("{\"message\":\"ok\"}");
     }
 
 }

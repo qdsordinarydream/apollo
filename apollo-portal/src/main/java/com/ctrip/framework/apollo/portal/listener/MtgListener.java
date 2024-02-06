@@ -100,12 +100,12 @@ public class MtgListener extends API {
 
     private String createMarkdownContent(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, List<String> operators) {
         return "#### **" + getTypeString(publishInfo.isRollbackEvent()) + "** \n " +
-                "#### ***操作人***: " + getOperator(operators) + " \n " +
-                "#### ***发布人***: " + releaseHistory.getOperator() + " \n " +
-                "#### ***Appid***: " + releaseHistory.getAppId() + " \n " +
-                "#### ***Cluster***: " + releaseHistory.getClusterName() + " \n " +
-                "#### ***ConfigGroup***: " + releaseHistory.getNamespaceName() + " \n " +
-                "#### ***变更内容***: " + publishInfo.getChangeItems().toString() + " \n " +
+                "#### ***操作人***: [" + getOperator(operators) + "] \n " +
+                "#### ***发布人***: [" + releaseHistory.getOperator() + "] \n " +
+                "#### ***Appid***: [" + releaseHistory.getAppId() + "] \n " +
+                "#### ***Cluster***: [" + releaseHistory.getClusterName() + "] \n " +
+                "#### ***ConfigGroup***: [" + releaseHistory.getNamespaceName() + "] \n " +
+                "#### ***变更内容***: [" + publishInfo.getChangeItems().toString() + "] \n " +
                 "> ![screenshot](" + pictureUrl + ") \n " +
                 "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }

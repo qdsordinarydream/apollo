@@ -17,7 +17,7 @@
 directive_module.directive('apollonspanel', directive);
 
 function directive($window, $translate, toastr, AppUtil, EventManager, PermissionService, NamespaceLockService,
-    UserService, CommitService, ReleaseService, InstanceService, NamespaceBranchService, ConfigService) {
+    UserService, CommitService, ReleaseService, InstanceService, NamespaceBranchService, ConfigService, NamespaceService) {
     return {
         restrict: 'E',
         templateUrl: AppUtil.prefixPath() + '/views/component/namespace-panel.html',
@@ -90,6 +90,8 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
             scope.deleteNamespace = deleteNamespace;
             scope.exportNamespace = exportNamespace;
             scope.importNamespace = importNamespace;
+
+            scope.promptReview = promptReview;
 
             var subscriberId = EventManager.subscribe(EventManager.EventType.UPDATE_GRAY_RELEASE_RULES,
                 function (context) {
@@ -967,6 +969,18 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
                 $window.location.href =
                     AppUtil.prefixPath() + '/apps/' + scope.appId + "/envs/" + scope.env + "/clusters/" + scope.cluster
                     + "/namespaces/" + namespace.baseInfo.namespaceName + "/items/export"
+            }
+
+            function promptReview(namespace){
+                NamespaceService.promptReview(scope.appId,
+                    scope.env,
+                    scope.cluster,
+                    namespace.baseInfo.namespaceName).then(
+                    function (result) {
+                        toastr.success($translate.instant('通知成功'));
+                    }, function (result) {
+                    }
+                )
             }
 
             function importNamespace(namespace) {

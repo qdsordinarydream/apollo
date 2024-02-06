@@ -61,8 +61,27 @@ appService.service("NamespaceService", ['$resource', '$q', 'AppUtil', function (
             method: 'GET',
             url: AppUtil.prefixPath() + '/apps/:appId/namespaces/:namespaceName/usage',
             isArray: true
+        },
+        promptReview: {
+            method: 'GET',
+            url: AppUtil.prefixPath() + '/apps/:appId/envs/:env/clusters/:clusterName/namespaces/:namespaceName/audit'
         }
     });
+
+    function promptReview (appId, env, clusterName, namespaceName) {
+        var d = $q.defer();
+        namespace_source.promptReview({
+            appId: appId,
+            env: env,
+            clusterName: clusterName,
+            namespaceName: namespaceName
+        }, function (result) {
+            d.resolve(result);
+        }, function (result) {
+            d.reject(result);
+        });
+        return d.promise;
+    }
 
     function find_public_namespaces() {
         var d = $q.defer();
@@ -221,7 +240,8 @@ appService.service("NamespaceService", ['$resource', '$q', 'AppUtil', function (
         loadAppNamespace: loadAppNamespace,
         deleteAppNamespace: deleteAppNamespace,
         getLinkedNamespaceUsage: getLinkedNamespaceUsage,
-        getNamespaceUsage: getNamespaceUsage
+        getNamespaceUsage: getNamespaceUsage,
+        promptReview: promptReview
     }
 
 }]);
