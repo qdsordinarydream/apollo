@@ -117,7 +117,6 @@ appService.service('EventManager', [function () {
             REFRESH_NAMESPACE: 'refresh_namespace',
             REFRESH_RELEASE_HISTORY: 'refresh_release_history',
             PUBLISH_NAMESPACE: 'pre_public_namespace',
-            NAMESPACE_REVIEW: 'pre_namespace_review',
             MERGE_AND_PUBLISH_NAMESPACE: 'merge_and_publish_namespace',
             PRE_ROLLBACK_NAMESPACE: 'pre_rollback_namespace',
             ROLLBACK_NAMESPACE: 'rollback_namespace',

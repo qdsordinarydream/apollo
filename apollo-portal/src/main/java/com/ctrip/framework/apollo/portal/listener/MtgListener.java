@@ -50,8 +50,12 @@ public class MtgListener extends API {
         } else {
             if (!publishInfo.getChangeItems().isEmpty()) {
                 for (ItemBO entry : publishInfo.getChangeItems()) {
-                    System.out.printf("收到的变更 key: %s, old: %s, value: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue());
-                    ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
+                    System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
+                    if (entry.getItem().getDataChangeLastModifiedBy() != null) {
+                        ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
+                    } else {
+                        System.out.printf("收到的变更 key: %s, old: %s, value: %s 没有操作人 \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue());
+                    }
                 }
             }
         }
@@ -60,7 +64,7 @@ public class MtgListener extends API {
 
         try {
             sendMsg(releaseHistory, publishInfo, ddUserIds);
-        } catch (ApiException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -70,7 +74,7 @@ public class MtgListener extends API {
 
     // 发送钉钉机器人群通知
     // https://open.dingtalk.com/document/robots/custom-robot-access
-    private void sendMsg(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, Map<String, String> dd) throws ApiException {
+    private void sendMsg(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, Map<String, String> dd) throws Exception {
         List<String> operators = new ArrayList<>(dd.keySet());
         if (publishInfo.getChangeItems() == null) {
             publishInfo.setChangeItems(new ArrayList<>());
@@ -149,10 +153,9 @@ public class MtgListener extends API {
             return cache.get(email);
         }
 
-        EhrMessageDTO ehrMsg = createEhrMessageDTO(email);
-        String urlString = ehrMsg.GetUrl();
-        String response = "";
         try {
+            EhrMessageDTO ehrMsg = createEhrMessageDTO(email);
+            String urlString = ehrMsg.GetUrl();
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -183,10 +186,10 @@ public class MtgListener extends API {
             } else {
                 System.out.println("GET request not worked");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return response;
+        return "";
     }
 }

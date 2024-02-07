@@ -35,6 +35,13 @@
             </div>
 
             <div class="col-md-6 col-sm-6 text-right header-buttons">
+                <button type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
+                        title="{{'Component.Namespace.Master.Items.ReviewSenderTips' | translate }}"
+                        ng-show="(!namespace.hasReleasePermission && namespace.hasModifyPermission)"
+                        ng-disabled="namespace.isTextEditing" ng-click="promptReview(namespace.branch)">
+                    <img src="img/release.png">
+                    {{'Component.Namespace.Master.Items.ReviewSender' | translate }}
+                </button>
                 <a type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
                     title="{{'Component.Namespace.Branch.ContinueGrayscalePublish' | translate }}"
                     ng-show="(namespace.hasReleasePermission || namespace.hasModifyPermission)"

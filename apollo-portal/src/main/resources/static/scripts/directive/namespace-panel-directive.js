@@ -972,9 +972,11 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
             }
 
             function promptReview(namespace){
+                console.log("namespace")
+                console.log(namespace)
                 NamespaceService.promptReview(scope.appId,
                     scope.env,
-                    scope.cluster,
+                    namespace.baseInfo.clusterName,
                     namespace.baseInfo.namespaceName).then(
                     function (result) {
                         toastr.success($translate.instant('通知成功'));

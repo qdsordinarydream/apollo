@@ -26,6 +26,7 @@ public class ItemChangeSets extends BaseDTO{
 
   private List<ItemDTO> createItems = new LinkedList<>();
   private List<ItemDTO> updateItems = new LinkedList<>();
+  private List<ItemDTO> updateItemsBefore = new LinkedList<>();
   private List<ItemDTO> deleteItems = new LinkedList<>();
 
   public void addCreateItem(ItemDTO item) {
@@ -39,6 +40,8 @@ public class ItemChangeSets extends BaseDTO{
   public void addDeleteItem(ItemDTO item) {
     deleteItems.add(item);
   }
+
+  public void addUpdateItemsBefore(ItemDTO item) {updateItemsBefore.add(item); }
 
   public boolean isEmpty(){
     return createItems.isEmpty() && updateItems.isEmpty() && deleteItems.isEmpty();
@@ -56,6 +59,8 @@ public class ItemChangeSets extends BaseDTO{
     return deleteItems;
   }
 
+  public List<ItemDTO> getUpdateItemsBefore() {return updateItemsBefore;}
+
   public void setCreateItems(List<ItemDTO> createItems) {
     this.createItems = createItems;
   }
@@ -67,5 +72,7 @@ public class ItemChangeSets extends BaseDTO{
   public void setDeleteItems(List<ItemDTO> deleteItems) {
     this.deleteItems = deleteItems;
   }
+
+  public void setUpdateItemsBefore(List<ItemDTO> updateItemsBefore) {this.updateItemsBefore = updateItemsBefore;}
 
 }

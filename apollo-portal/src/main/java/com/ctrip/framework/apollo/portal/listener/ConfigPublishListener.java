@@ -108,16 +108,16 @@ public class ConfigPublishListener {
       System.out.println("releaseHistory :");
       System.out.println(releaseHistory);
 
-      // 灰度发版不通知
-      if (releaseHistory.getOperation() != 2) {
-        mtgListener.sendDingTalkMessage(releaseHistory, publishInfo);
-      }
-
       this.sendPublishWebHook(releaseHistory);
 
       sendPublishEmail(releaseHistory);
 
       sendPublishMsg(releaseHistory);
+
+      // 灰度发版不通知
+      if (releaseHistory.getOperation() != 2) {
+        mtgListener.sendDingTalkMessage(releaseHistory, publishInfo);
+      }
     }
 
     private ReleaseHistoryBO getReleaseHistory() {

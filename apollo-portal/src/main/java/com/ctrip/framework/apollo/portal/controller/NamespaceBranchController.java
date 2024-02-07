@@ -19,9 +19,12 @@ package com.ctrip.framework.apollo.portal.controller;
 import com.ctrip.framework.apollo.audit.annotation.ApolloAuditLog;
 import com.ctrip.framework.apollo.audit.annotation.OpType;
 import com.ctrip.framework.apollo.common.dto.GrayReleaseRuleDTO;
+import com.ctrip.framework.apollo.common.dto.ItemDTO;
 import com.ctrip.framework.apollo.common.dto.NamespaceDTO;
 import com.ctrip.framework.apollo.common.dto.ReleaseDTO;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
+import com.ctrip.framework.apollo.common.utils.BeanUtils;
+import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
 import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.portal.component.PermissionValidator;
 import com.ctrip.framework.apollo.portal.component.config.PortalConfig;
@@ -41,6 +44,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class NamespaceBranchController {
@@ -131,13 +138,47 @@ public class NamespaceBranchController {
                                                              model.getReleaseTitle(), model.getReleaseComment(),
                                                              model.isEmergencyPublish(), deleteBranch);
 
+    List<ItemBO> changeItems = new ArrayList<>();
+    if (!createdRelease.getItemChangeSets().isEmpty()) {
+        for (ItemDTO itemDTO : createdRelease.getItemChangeSets().getCreateItems()) {
+            ItemBO itemBO = new ItemBO();
+            itemBO.setItem(itemDTO);
+            itemBO.setNewValue(itemDTO.getValue());
+            changeItems.add(itemBO);
+        }
+        Map<String, ItemDTO> updateItemMap = BeanUtils.mapByKey("key", createdRelease.getItemChangeSets().getUpdateItemsBefore());
+        for (ItemDTO itemDTO : createdRelease.getItemChangeSets().getUpdateItems()) {
+            ItemBO itemBO = new ItemBO();
+            itemBO.setItem(itemDTO);
+            itemBO.setOldValue(updateItemMap.get(itemDTO.getKey()).getValue());
+            itemBO.setNewValue(itemDTO.getValue());
+            changeItems.add(itemBO);
+        }
+        for (ItemDTO itemDTO : createdRelease.getItemChangeSets().getDeleteItems()) {
+            ItemBO itemBO = new ItemBO();
+            itemBO.setItem(itemDTO);
+            itemBO.setOldValue(itemDTO.getValue());
+            changeItems.add(itemBO);
+        }
+    }
+
+    // debug
+    for (ItemBO itemBO : changeItems) {
+        System.out.printf("merge changeItems key %s, old %s, new %s, " +
+                        " modify %s, create %s, " +
+                        " createdisplay :%s, updatedisplay :%s \n",
+                itemBO.getItem().getKey(), itemBO.getOldValue(), itemBO.getNewValue(),
+                itemBO.getItem().getDataChangeLastModifiedBy(), itemBO.getItem().getDataChangeCreatedBy(),
+                itemBO.getItem().getDataChangeCreatedByDisplayName(), itemBO.getItem().getDataChangeLastModifiedByDisplayName());
+    }
+
     ConfigPublishEvent event = ConfigPublishEvent.instance();
     event.withAppId(appId)
         .withCluster(clusterName)
         .withNamespace(namespaceName)
         .withReleaseId(createdRelease.getId())
         .setMergeEvent(true)
-        .setEnv(Env.valueOf(env));
+        .setEnv(Env.valueOf(env)).setChangeItems(changeItems);
 
     publisher.publishEvent(event);
 

@@ -50,7 +50,9 @@ public class NamespaceAuditService {
         for (ItemBO item : namespaceBO.getItems()) {
             System.out.printf("item: %s, oldValue: %s, newValue: %s \n", item.getItem().getKey(), item.getOldValue(), item.getNewValue());
             if (item.getOldValue() != null || item.getNewValue() != null) {
-                changeItems.add(item);
+                if (item.getItem().getDataChangeLastModifiedBy() != null) {
+                    changeItems.add(item);
+                }
             }
         }
 

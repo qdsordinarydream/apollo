@@ -138,6 +138,7 @@ public class NamespaceBranchService {
     Tracer.logEvent(TracerEventType.MERGE_GRAY_RELEASE,
             String.format("%s+%s+%s+%s", appId, env, clusterName, namespaceName));
 
+    mergedResult.setItemChangeSets(changeSets);
     return mergedResult;
   }
 

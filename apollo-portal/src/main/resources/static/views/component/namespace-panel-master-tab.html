@@ -61,20 +61,19 @@
             </div>
 
             <div class="col-md-6 col-sm-6 text-right header-buttons">
-
-                <button type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
-                    title="{{'Component.Namespace.Master.Items.PublishTips' | translate }}"
-                    ng-show="(namespace.hasReleasePermission || namespace.hasModifyPermission)"
-                    ng-disabled="namespace.isTextEditing" ng-click="publish(namespace)">
-                    <img src="img/release.png">
-                    {{'Component.Namespace.Master.Items.Publish' | translate }}
-                </button>
                 <button type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
                         title="{{'Component.Namespace.Master.Items.ReviewSenderTips' | translate }}"
                         ng-show="(!namespace.hasReleasePermission && namespace.hasModifyPermission)"
                         ng-disabled="namespace.isTextEditing" ng-click="promptReview(namespace)">
                     <img src="img/release.png">
                     {{'Component.Namespace.Master.Items.ReviewSender' | translate }}
+                </button>
+                <button type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
+                    title="{{'Component.Namespace.Master.Items.PublishTips' | translate }}"
+                    ng-show="(namespace.hasReleasePermission || namespace.hasModifyPermission)"
+                    ng-disabled="namespace.isTextEditing" ng-click="publish(namespace)">
+                    <img src="img/release.png">
+                    {{'Component.Namespace.Master.Items.Publish' | translate }}
                 </button>
                 <button type="button" class="btn btn-default btn-sm" data-tooltip="tooltip" data-placement="bottom"
                     title="{{'Component.Namespace.Master.Items.RollbackTips' | translate }}"
