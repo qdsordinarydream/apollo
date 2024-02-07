@@ -55,6 +55,10 @@ public class NamespaceAuditService {
                 }
             }
         }
+        if (changeItems.isEmpty()) {
+            System.out.println("没有变更的配置项");
+            return;
+        }
 
         // 查找有发布权限的人
         NamespaceRolesAssignedUsers assignedUsers = new NamespaceRolesAssignedUsers();

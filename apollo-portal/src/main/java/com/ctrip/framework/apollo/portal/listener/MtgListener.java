@@ -43,19 +43,22 @@ public class MtgListener extends API {
         System.out.println("send to dingding");
         System.out.printf("url: %s, token: %s, reviewUrl: %s \n", ddUrl, ddToken, reviewHost);
 
+        if (publishInfo.getChangeItems().isEmpty()) {
+            System.out.println("没有变更的配置项");
+            return;
+        }
         Map<String, String> ddUserIds = new HashMap<>();
+
         // 如果是回滚事件，发布是 configGroup 维度，所以只能是操作人一个人，不存在多人修改的情况
         if (publishInfo.isRollbackEvent()) {
             ddUserIds.put(getDDUserId(releaseHistory.getOperator()), "");
         } else {
-            if (!publishInfo.getChangeItems().isEmpty()) {
-                for (ItemBO entry : publishInfo.getChangeItems()) {
-                    System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
-                    if (entry.getItem().getDataChangeLastModifiedBy() != null) {
-                        ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
-                    } else {
-                        System.out.printf("收到的变更 key: %s, old: %s, value: %s 没有操作人 \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue());
-                    }
+            for (ItemBO entry : publishInfo.getChangeItems()) {
+                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
+                if (entry.getItem().getDataChangeLastModifiedBy() != null) {
+                    ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
+                } else {
+                    System.out.printf("收到的变更 key: %s, old: %s, value: %s 没有操作人 \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue());
                 }
             }
         }
