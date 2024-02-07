@@ -112,17 +112,18 @@ public class MtgListener extends API {
                 "#### ***Appid***: [" + releaseHistory.getAppId() + "] \n " +
                 "#### ***Cluster***: [" + releaseHistory.getClusterName() + "] \n " +
                 "#### ***ConfigGroup***: [" + releaseHistory.getNamespaceName() + "] \n " +
-                "#### ***变更内容***: [" + publishInfo.getChangeItems().toString() + "] \n " +
+                "#### ***变更内容***: " + publishInfo.getChangeItems().toString() + " \n " +
                 "> ![screenshot](" + pictureUrl + ") \n " +
                 "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }
 
     private String getOperator(List<String> dds) {
-        StringBuilder resp = new StringBuilder();
-        for (String dd : dds) {
-            resp.append("@").append(dd).append(",");
+        // 设置接收者，多个用,分开
+        StringJoiner joiner = new StringJoiner(",");
+        for (String value : dds) {
+            joiner.add("@"+value);
         }
-        return resp.toString();
+        return joiner.toString();
     }
 
     private String getUrl(String appid, String cluster) {
