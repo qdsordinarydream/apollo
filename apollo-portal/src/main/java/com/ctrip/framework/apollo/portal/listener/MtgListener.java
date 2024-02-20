@@ -121,7 +121,7 @@ public class MtgListener extends API {
         // 设置接收者，多个用,分开
         StringJoiner joiner = new StringJoiner(",");
         for (String value : dds) {
-            joiner.add("@"+value);
+            joiner.add("@" + value);
         }
         return joiner.toString();
     }
@@ -188,7 +188,7 @@ public class MtgListener extends API {
 
                 return ddUserId;
             } else {
-                System.out.println("GET request not worked");
+                System.out.printf("GET request 请求失败, %s, url :%s", connection.getResponseMessage(), urlString);
             }
         } catch (Exception e) {
             e.printStackTrace();
