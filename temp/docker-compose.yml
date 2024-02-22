@@ -1,11 +1,38 @@
 version: '2.1'
 
 services:
+  apollo-db:
+    image: mysql:8.0
+    container_name: apollo-db-mtg
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      #MYSQL_ROOT_PASSWORD: 'apollo'
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 1s
+      retries: 10
+    depends_on:
+      - apollo-dbdata
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    volumes_from:
+      - apollo-dbdata
+
+  apollo-dbdata:
+    image: alpine:latest
+    container_name: apollo-dbdata-mtg
+    volumes:
+      - /var/lib/mysql
+      -
   apollo-configservice-mtg:
     image: apolloconfig/apollo-configservice:0.0.1-MTG
     container_name: apollo-configservice-mtg
     ports:
-      - "8280:8080"
+      - "8180:8080"
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://apollo-db:3306/ApolloConfigDB?characterEncoding=utf8"
       SPRING_DATASOURCE_USERNAME: root
@@ -19,7 +46,7 @@ services:
     image: apolloconfig/apollo-adminservice:0.0.1-MTG
     container_name: apollo-adminservice-mtg
     ports:
-      - "8290:8090"
+      - "8190:8090"
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://apollo-db:3306/ApolloConfigDB?characterEncoding=utf8"
       SPRING_DATASOURCE_USERNAME: root
@@ -33,7 +60,7 @@ services:
     image: apolloconfig/apollo-portal:0.0.1-MTG
     container_name: apollo-portal-mtg
     ports:
-      - "8270:8070"
+      - "8170:8070"
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://apollo-db:3306/ApolloPortalDB?characterEncoding=utf8"
       SPRING_DATASOURCE_USERNAME: root
