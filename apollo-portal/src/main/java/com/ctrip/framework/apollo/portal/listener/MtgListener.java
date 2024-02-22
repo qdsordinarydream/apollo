@@ -188,7 +188,7 @@ public class MtgListener extends API {
 
                 return ddUserId;
             } else {
-                System.out.printf("GET request 请求失败, %s, url :%s", connection.getResponseMessage(), urlString);
+                System.out.printf("GET request 请求失败, %s, url :%s\n", connection.getResponseMessage(), urlString);
             }
         } catch (Exception e) {
             e.printStackTrace();
