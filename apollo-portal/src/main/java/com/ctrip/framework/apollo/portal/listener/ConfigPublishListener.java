@@ -105,9 +105,6 @@ public class ConfigPublishListener {
         return;
       }
 
-      System.out.println("releaseHistory :");
-      System.out.println(releaseHistory);
-
       this.sendPublishWebHook(releaseHistory);
 
       sendPublishEmail(releaseHistory);

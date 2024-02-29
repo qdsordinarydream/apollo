@@ -89,7 +89,7 @@ public class ReviewNotificationSender extends API {
         // 获取token
         String accessToken;
         if (cache.containsKey(ddAppKey + ddAppSecret)) {
-            System.out.println("token 走了缓存");
+//            System.out.println("token 走了缓存");
             accessToken = cache.get(ddAppKey + ddAppSecret);
         } else {
             accessToken = getToken(ddAppKey, ddAppSecret);
@@ -114,8 +114,8 @@ public class ReviewNotificationSender extends API {
         Map<String, String> ddUserIds = new HashMap<>();
         if (!items.isEmpty()) {
             for (ItemBO entry : items) {
-                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator %s \n", entry.getItem().getKey(),
-                        entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
+//                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator %s \n", entry.getItem().getKey(),
+//                        entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
                 ddUserIds.put(entry.getItem().getDataChangeLastModifiedBy(), "");
             }
         }
@@ -228,6 +228,7 @@ public class ReviewNotificationSender extends API {
             TeaException err = new TeaException(_err.getMessage(), _err);
             if (!com.aliyun.teautil.Common.empty(err.code) && !com.aliyun.teautil.Common.empty(err.message)) {
                 // err 中含有 code 和 message 属性，可帮助开发定位问题
+                System.out.printf("GET request 请求失败, %s, url :%s\n", err.message, err.code);
             }
         }
         return "";

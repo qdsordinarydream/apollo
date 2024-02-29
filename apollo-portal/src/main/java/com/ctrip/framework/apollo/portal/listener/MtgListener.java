@@ -54,7 +54,7 @@ public class MtgListener extends API {
             ddUserIds.put(getDDUserId(releaseHistory.getOperator()), "");
         } else {
             for (ItemBO entry : publishInfo.getChangeItems()) {
-                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
+//                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
                 if (entry.getItem().getDataChangeLastModifiedBy() != null) {
                     ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
                 } else {
@@ -153,7 +153,7 @@ public class MtgListener extends API {
     public String getDDUserId(String email) {
         // Check if value is present in the cache
         if (cache.containsKey(email)) {
-            System.out.println("走了缓存");
+//            System.out.println("走了缓存");
             return cache.get(email);
         }
 
