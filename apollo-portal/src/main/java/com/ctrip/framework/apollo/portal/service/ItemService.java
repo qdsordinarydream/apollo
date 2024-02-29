@@ -158,8 +158,8 @@ public class ItemService {
         itemAPI.updateItem(appId, env, clusterName, namespaceName, item.getId(), item);
     }
 
-    public void deleteItem(Env env, ItemDTO item, String userId) {
-        itemAPI.deleteItem(env, item.getId(), userId);
+    public void deleteItem(Env env, long itemId, String userId) {
+        itemAPI.deleteItem(env, itemId, userId);
     }
 
     public List<ItemDTO> findItems(String appId, Env env, String clusterName, String namespaceName) {
