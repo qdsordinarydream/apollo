@@ -2,14 +2,15 @@ package com.ctrip.framework.apollo.portal.listener;
 
 import com.ctrip.framework.apollo.common.dto.EhrMessageDTO;
 import com.ctrip.framework.apollo.portal.api.API;
+import com.ctrip.framework.apollo.portal.component.RetryableRestTemplate;
 import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
 import com.ctrip.framework.apollo.portal.entity.bo.ReleaseHistoryBO;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiRobotSendRequest;
-import com.dingtalk.api.response.OapiRobotSendResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.taobao.api.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class MtgListener extends API {
+    private Logger logger = LoggerFactory.getLogger(RetryableRestTemplate.class);
     private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
 
     @Value("${ddUrl}")
@@ -40,11 +42,8 @@ public class MtgListener extends API {
 
     // 发送 POST 请求到钉钉机器人
     public void sendDingTalkMessage(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo) {
-        System.out.println("send to dingding");
-        System.out.printf("url: %s, token: %s, reviewUrl: %s \n", ddUrl, ddToken, reviewHost);
-
         if (publishInfo.getChangeItems().isEmpty()) {
-            System.out.println("没有变更的配置项");
+            logger.warn("发布信息为空，不发送钉钉通知");
             return;
         }
         Map<String, String> ddUserIds = new HashMap<>();
@@ -54,24 +53,17 @@ public class MtgListener extends API {
             ddUserIds.put(getDDUserId(releaseHistory.getOperator()), "");
         } else {
             for (ItemBO entry : publishInfo.getChangeItems()) {
-//                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator: %s \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
                 if (entry.getItem().getDataChangeLastModifiedBy() != null) {
                     ddUserIds.put(getDDUserId(entry.getItem().getDataChangeLastModifiedBy()), "");
-                } else {
-                    System.out.printf("收到的变更 key: %s, old: %s, value: %s 没有操作人 \n", entry.getItem().getKey(), entry.getOldValue(), entry.getNewValue());
                 }
             }
         }
-
-        System.out.printf("ddUserId: %s \n", ddUserIds);
 
         try {
             sendMsg(releaseHistory, publishInfo, ddUserIds);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        System.out.println("send to dingding success");
     }
 
 
@@ -100,9 +92,7 @@ public class MtgListener extends API {
         req.setAt(at);
 
         // 发送请求
-        OapiRobotSendResponse response = client.execute(req);
-
-        System.out.println(response.getBody());
+        client.execute(req);
     }
 
     private String createMarkdownContent(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, List<String> operators) {
@@ -153,7 +143,6 @@ public class MtgListener extends API {
     public String getDDUserId(String email) {
         // Check if value is present in the cache
         if (cache.containsKey(email)) {
-//            System.out.println("走了缓存");
             return cache.get(email);
         }
 
@@ -168,7 +157,6 @@ public class MtgListener extends API {
 
             // Get the response code
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             // Read the response
             if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -176,11 +164,9 @@ public class MtgListener extends API {
                 EhrMessageDTO.Response responseObj = objectMapper.readValue(connection.getInputStream(), EhrMessageDTO.Response.class);
 
                 if (responseObj.getData().getItems().isEmpty()) {
-                    System.out.println("responseObj: 没有查到相关信息返回为空 \n");
+                    logger.error("responseObj: 没有查到相关信息返回为空");
                     return "";
                 }
-
-                System.out.printf("responseObj: %s \n", responseObj.getData().getItems());
 
                 String ddUserId = responseObj.getData().getItems().get(0).getDd_user_id();
                 // Put the value into the cache
@@ -188,7 +174,7 @@ public class MtgListener extends API {
 
                 return ddUserId;
             } else {
-                System.out.printf("GET request 请求失败, %s, url :%s\n", connection.getResponseMessage(), urlString);
+                logger.error("GET请求未成功, url: " + urlString + ", responseCode: " + responseCode);
             }
         } catch (Exception e) {
             e.printStackTrace();

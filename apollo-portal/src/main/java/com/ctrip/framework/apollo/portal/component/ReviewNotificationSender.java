@@ -12,6 +12,8 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiMessageCorpconversationAsyncsendV2Request;
 import com.dingtalk.api.response.OapiMessageCorpconversationAsyncsendV2Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ReviewNotificationSender extends API {
+    private Logger logger = LoggerFactory.getLogger(RetryableRestTemplate.class);
     private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
 
     @Value("${reviewHost}")
@@ -46,8 +49,6 @@ public class ReviewNotificationSender extends API {
 
     // 发送 POST 请求到钉钉机器人
     public void sendReviewNotification(String appid, String clusterName, String cfGroup, List<ItemBO> items, Set<UserInfo> releaseNamespaceUsers) {
-        System.out.println("send to dingding");
-
         // 发送钉钉通知
         Map<String, String> ddUserIDs = new HashMap<>();
         if (!releaseNamespaceUsers.isEmpty()) {
@@ -56,16 +57,12 @@ public class ReviewNotificationSender extends API {
             }
         }
 
-        System.out.printf("ddUserIDs: %s \n", ddUserIDs);
-
         // 发送具体消息
         try {
             sendMsg(appid, clusterName, cfGroup, ddUserIDs, items);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        System.out.println("send to dingding success");
     }
 
 
@@ -89,7 +86,6 @@ public class ReviewNotificationSender extends API {
         // 获取token
         String accessToken;
         if (cache.containsKey(ddAppKey + ddAppSecret)) {
-//            System.out.println("token 走了缓存");
             accessToken = cache.get(ddAppKey + ddAppSecret);
         } else {
             accessToken = getToken(ddAppKey, ddAppSecret);
@@ -100,12 +96,10 @@ public class ReviewNotificationSender extends API {
         OapiMessageCorpconversationAsyncsendV2Response rsp = client.execute(request, accessToken);
         // token 过期，重新获取
         if (Objects.equals(rsp.getSubCode(), "40014")) {
-            System.out.println("token 缓存失效，重新获取");
             accessToken = getToken(ddAppKey, ddAppSecret);
             cache.put(ddAppKey + ddAppSecret, accessToken);
-            rsp = client.execute(request, accessToken);
+            client.execute(request, accessToken);
         }
-        System.out.println(rsp.getBody());
     }
 
     private OapiMessageCorpconversationAsyncsendV2Request.Msg createMessageContent(String appid, String clusterName, String cfGroup, List<ItemBO> items) {
@@ -114,8 +108,6 @@ public class ReviewNotificationSender extends API {
         Map<String, String> ddUserIds = new HashMap<>();
         if (!items.isEmpty()) {
             for (ItemBO entry : items) {
-//                System.out.printf("收到的变更 key: %s, old: %s, value: %s, operator %s \n", entry.getItem().getKey(),
-//                        entry.getOldValue(), entry.getNewValue(), entry.getItem().getDataChangeLastModifiedBy());
                 ddUserIds.put(entry.getItem().getDataChangeLastModifiedBy(), "");
             }
         }
@@ -158,7 +150,6 @@ public class ReviewNotificationSender extends API {
 
     public String getDDUserId(String email) {
         if (cache.containsKey(email)) {
-            System.out.println("ddId 走了缓存");
             return cache.get(email);
         }
 
@@ -172,14 +163,13 @@ public class ReviewNotificationSender extends API {
             connection.setRequestMethod("GET");
 
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 EhrMessageDTO.Response responseObj = objectMapper.readValue(connection.getInputStream(), EhrMessageDTO.Response.class);
 
                 if (responseObj.getData().getItems().isEmpty()) {
-                    System.out.println("responseObj: 没有查到相关信息返回为空 \n");
+                    logger.error("responseObj: 没有查到相关信息返回为空");
                     return "";
                 }
 
@@ -188,7 +178,7 @@ public class ReviewNotificationSender extends API {
 
                 return ddUserId;
             } else {
-                System.out.println("GET请求未成功");
+                logger.error("GET请求未成功");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -221,14 +211,14 @@ public class ReviewNotificationSender extends API {
             return resp.getBody().getAccessToken();
         } catch (TeaException err) {
             if (!com.aliyun.teautil.Common.empty(err.code) && !com.aliyun.teautil.Common.empty(err.message)) {
-                System.out.println("err code: " + err.code + ", err message: " + err.message);
+                logger.error("GET request 请求失败, err: " + err.message + ",  err code:" + err.code);
             }
 
         } catch (Exception _err) {
             TeaException err = new TeaException(_err.getMessage(), _err);
             if (!com.aliyun.teautil.Common.empty(err.code) && !com.aliyun.teautil.Common.empty(err.message)) {
                 // err 中含有 code 和 message 属性，可帮助开发定位问题
-                System.out.printf("GET request 请求失败, %s, url :%s\n", err.message, err.code);
+                logger.error("GET request 请求失败, err: " + err.message + ",  err code:" + err.code);
             }
         }
         return "";
