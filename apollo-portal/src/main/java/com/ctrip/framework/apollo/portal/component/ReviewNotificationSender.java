@@ -125,7 +125,7 @@ public class ReviewNotificationSender extends API {
                         "#### ***Appid***: [" + appid + "] \n " +
                         "#### ***Cluster***: [" + clusterName + "] \n " +
                         "#### ***ConfigGroup***: [" + cfGroup + "] \n " +
-                        "#### ***修改详情***: " + spliceItems(items) + " \n " +
+                        "#### ***修改详情***: \n " + spliceItems(items) + " \n " +
                         "> ![screenshot](" + pictureUrl + ") \n " +
                         "> ###### 信息审核 => [地址](" + getUrl(appid, clusterName) + ") \n");
 
