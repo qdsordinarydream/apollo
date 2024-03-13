@@ -28,9 +28,9 @@ public class ItemBO {
     @Override
     public String toString() {
         return "{" +
-                "key=" + item.getKey() +
-                ", oldValue=" + oldValue +
-                ", newValue=" + newValue +
+                "Key=" + item.getKey() + "\n" +
+                "OldValue=" + oldValue + "\n" +
+                "NewValue=" + newValue + "\n" +
                 '}';
     }
 

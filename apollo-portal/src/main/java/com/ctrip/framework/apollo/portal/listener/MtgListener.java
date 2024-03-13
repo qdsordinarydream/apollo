@@ -102,7 +102,7 @@ public class MtgListener extends API {
                 "#### ***Appid***: [" + releaseHistory.getAppId() + "] \n " +
                 "#### ***Cluster***: [" + releaseHistory.getClusterName() + "] \n " +
                 "#### ***ConfigGroup***: [" + releaseHistory.getNamespaceName() + "] \n " +
-                "#### ***变更内容***: " + publishInfo.getChangeItems().toString() + " \n " +
+                "#### ***变更内容***: \n " + publishInfo.getChangeItems().toString() + " \n " +
                 "> ![screenshot](" + pictureUrl + ") \n " +
                 "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }
