@@ -125,11 +125,21 @@ public class ReviewNotificationSender extends API {
                         "#### ***Appid***: [" + appid + "] \n " +
                         "#### ***Cluster***: [" + clusterName + "] \n " +
                         "#### ***ConfigGroup***: [" + cfGroup + "] \n " +
-                        "#### ***修改详情***: " + items.toString() + " \n " +
+                        "#### ***修改详情***: " + spliceItems(items) + " \n " +
                         "> ![screenshot](" + pictureUrl + ") \n " +
                         "> ###### 信息审核 => [地址](" + getUrl(appid, clusterName) + ") \n");
 
         return msg;
+    }
+
+    private String spliceItems(List<ItemBO> list) {
+        StringBuilder sb = new StringBuilder();
+        for (ItemBO item : list) {
+            sb.append(" ##### ***Key***: " + item.getItem().getKey() + " \n ");
+            sb.append(" ##### ***OldValue***: \n " + item.getOldValue() + " \n  \n ");
+            sb.append(" ##### ***NewValue***: \n " + item.getNewValue() + " \n  \n ");
+        }
+        return sb.toString();
     }
 
     private String getUrl(String appid, String cluster) {

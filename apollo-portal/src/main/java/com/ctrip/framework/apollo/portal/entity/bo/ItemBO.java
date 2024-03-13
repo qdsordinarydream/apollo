@@ -25,15 +25,6 @@ public class ItemBO {
     private String oldValue;
     private String newValue;
 
-    @Override
-    public String toString() {
-        return " \n {" +
-                "Key= " + item.getKey() + " \n " +
-                "OldValue= " + oldValue + " \n " +
-                "NewValue= " + newValue + " \n " +
-                "} \n ";
-    }
-
     public ItemDTO getItem() {
         return item;
     }
