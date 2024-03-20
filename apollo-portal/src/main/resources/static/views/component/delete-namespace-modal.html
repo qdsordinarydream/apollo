@@ -30,7 +30,10 @@
             <div class="modal-body form-horizontal" ng-show="toDeleteNamespace.isPublic && toDeleteNamespace.isLinkedNamespace">
                 {{'Component.DeleteNamespace.LinkedContent' | translate }}
             </div>
-            <div class="modal-body form-horizontal" ng-show="!toDeleteNamespace.isPublic">
+            <div class="modal-body form-horizontal" ng-show="!toDeleteNamespace.isPublic && !toDeleteNamespace.isLinkedNamespace && toDeleteNamespace.baseInfo.clusterName !== 'default' ">
+                {{'Component.DeleteNamespace.LinkedContent' | translate }}
+            </div>
+            <div class="modal-body form-horizontal" ng-show="!toDeleteNamespace.isPublic && (toDeleteNamespace.isLinkedNamespace || toDeleteNamespace.baseInfo.clusterName == 'default') ">
                     {{'Component.DeleteNamespace.PrivateContent' | translate }}
             </div>
 
