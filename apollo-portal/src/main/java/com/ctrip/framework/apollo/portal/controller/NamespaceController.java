@@ -301,19 +301,19 @@ public class NamespaceController {
         .collect(Collectors.toSet());
 
     Set<String> portalDbAllAppNamespaceNames = Sets.newHashSet();
-    Set<String> portalDbPrivateAppNamespaceNames = Sets.newHashSet();
+    //Set<String> portalDbPrivateAppNamespaceNames = Sets.newHashSet();
 
     for (AppNamespace appNamespace : portalDbAppNamespaces) {
       portalDbAllAppNamespaceNames.add(appNamespace.getName());
-      if (!appNamespace.isPublic()) {
-        portalDbPrivateAppNamespaceNames.add(appNamespace.getName());
-      }
+      //if (!appNamespace.isPublic()) {
+      //portalDbPrivateAppNamespaceNames.add(appNamespace.getName());
+      //}
     }
 
     // AppNamespaces should be the same
     Set<String> missingAppNamespaceNames = Sets.difference(portalDbAllAppNamespaceNames, configDbAppNamespaceNames);
     // Private namespaces should all exist
-    Set<String> missingNamespaceNames = Sets.difference(portalDbPrivateAppNamespaceNames, configDbNamespaceNames);
+    Set<String> missingNamespaceNames = Sets.difference(portalDbAllAppNamespaceNames, configDbNamespaceNames);
 
     return Sets.union(missingAppNamespaceNames, missingNamespaceNames);
   }
