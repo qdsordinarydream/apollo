@@ -102,7 +102,8 @@ public class MtgListener extends API {
                 "#### ***Appid***: [" + releaseHistory.getAppId() + "] \n " +
                 "#### ***Cluster***: [" + releaseHistory.getClusterName() + "] \n " +
                 "#### ***ConfigGroup***: [" + releaseHistory.getNamespaceName() + "] \n " +
-                "#### ***变更内容***: \n " + spliceItems(publishInfo.getChangeItems()) + " \n " +
+                "#### ***变更内容***: \n " +
+                " <pre><code> " + spliceItems(publishInfo.getChangeItems()) + " </code></pre> \n " +
                 "> ![screenshot](" + pictureUrl + ") \n " +
                 "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }
@@ -110,9 +111,9 @@ public class MtgListener extends API {
     private String spliceItems(List<ItemBO> list) {
         StringBuilder sb = new StringBuilder();
         for (ItemBO item : list) {
-            sb.append(" ##### ***Key***: " + item.getItem().getKey() + " \n ");
-            sb.append(" ##### ***OldValue***: \n " + item.getOldValue() + " \n  \n ");
-            sb.append(" ##### ***NewValue***: \n " + item.getNewValue() + " \n  \n ");
+            sb.append(" ##### ***Key***: " + item.getItem().getKey() + " \n");
+            sb.append(" ##### ***OldValue***:\n " + item.getOldValue() + " \n");
+            sb.append(" ##### ***NewValue***:\n " + item.getNewValue() + " \n");
         }
         return sb.toString();
     }
