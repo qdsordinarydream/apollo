@@ -119,16 +119,15 @@ public class ReviewNotificationSender extends API {
         msg.setMsgtype("markdown");
         msg.setMarkdown(new OapiMessageCorpconversationAsyncsendV2Request.Markdown());
         msg.getMarkdown().setTitle("配置中心有“数据修改”待您审核发布");
-        msg.getMarkdown().setText(
-                "#### **" + "配置中心有“数据修改”待您审核发布" + "** \n " +
-                        "#### ***修改人***: [" + joiner.toString() + "] \n " +
-                        "#### ***Appid***: [" + appid + "] \n " +
-                        "#### ***Cluster***: [" + clusterName + "] \n " +
-                        "#### ***ConfigGroup***: [" + cfGroup + "] \n " +
-                        "#### ***变更内容***: \n " +
-                        " <pre><code> " + spliceItems(items) + " </code></pre> \n " +
-                        "> ![screenshot](" + pictureUrl + ") \n " +
-                        "> ###### 信息审核 => [地址](" + getUrl(appid, clusterName) + ") \n");
+        msg.getMarkdown().setText("<h3><strong>" + "配置中心有“数据修改”待您审核发布" + "</strong></h3>\n" +
+                "<p><strong>修改人:</strong> [" + joiner.toString() + "]</p>\n" +
+                "<p><strong>Appid:</strong> [" + appid + "]</p>\n" +
+                "<p><strong>Cluster:</strong> [" + clusterName + "]</p>\n" +
+                "<p><strong>ConfigGroup:</strong> [" + cfGroup + "]</p>\n" +
+                "<p><strong>变更内容</p>\n" +
+                "<pre>" + spliceItems(items) + "</pre> \n \n " +
+                "> ![screenshot](" + pictureUrl + ") \n " +
+                "> ###### 信息审核 => [地址](" + getUrl(appid, clusterName) + ") \n");
 
         return msg;
     }
@@ -136,9 +135,9 @@ public class ReviewNotificationSender extends API {
     private String spliceItems(List<ItemBO> list) {
         StringBuilder sb = new StringBuilder();
         for (ItemBO item : list) {
-            sb.append(" ##### ***Key***: " + item.getItem().getKey() + " \n");
-            sb.append(" ##### ***OldValue***:\n " + item.getOldValue() + " \n");
-            sb.append(" ##### ***NewValue***:\n " + item.getNewValue() + " \n");
+            sb.append("<p><strong>Key</strong>: " + item.getItem().getKey() + " </p>\n");
+            sb.append("<p><strong>OldValue</strong>: \n" + item.getOldValue() + " </p>\n");
+            sb.append("<p><strong>NewValue</strong>: \n" + item.getNewValue() + " </p>\n");
         }
         return sb.toString();
     }

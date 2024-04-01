@@ -84,6 +84,7 @@ public class MtgListener extends API {
         String tps = getTypeString(publishInfo.isRollbackEvent());
         markdown.setTitle(tps);
         // 设置内容
+        System.out.println(createMarkdownContent(releaseHistory, publishInfo, operators));
         markdown.setText(createMarkdownContent(releaseHistory, publishInfo, operators));
         req.setMarkdown(markdown);
         // 设置@人
@@ -96,14 +97,14 @@ public class MtgListener extends API {
     }
 
     private String createMarkdownContent(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo, List<String> operators) {
-        return "#### **" + getTypeString(publishInfo.isRollbackEvent()) + "** \n " +
-                "#### ***操作人***: [" + getOperator(operators) + "] \n " +
-                "#### ***发布人***: [" + releaseHistory.getOperator() + "] \n " +
-                "#### ***Appid***: [" + releaseHistory.getAppId() + "] \n " +
-                "#### ***Cluster***: [" + releaseHistory.getClusterName() + "] \n " +
-                "#### ***ConfigGroup***: [" + releaseHistory.getNamespaceName() + "] \n " +
-                "#### ***变更内容***: \n " +
-                " <pre><code> " + spliceItems(publishInfo.getChangeItems()) + " </code></pre> \n " +
+        return "<h3><strong>" + getTypeString(publishInfo.isRollbackEvent()) + "</strong></h3>\n" +
+                "<p><strong>操作人:</strong> [" + getOperator(operators) + "]</p>\n" +
+                "<p><strong>发布人:</strong> [" + releaseHistory.getOperator() + "]</p>\n" +
+                "<p><strong>Appid:</strong> [" + releaseHistory.getAppId() + "]</p>\n" +
+                "<p><strong>Cluster:</strong> [" + releaseHistory.getClusterName() + "]</p>\n" +
+                "<p><strong>ConfigGroup:</strong> [" + releaseHistory.getNamespaceName() + "]</p>\n" +
+                "<p><strong>变更内容</p>\n" +
+                "<pre>" + spliceItems(publishInfo.getChangeItems()) + "</pre> \n \n " +
                 "> ![screenshot](" + pictureUrl + ") \n " +
                 "> ###### 详情信息 => [地址](" + getUrl(releaseHistory.getAppId(), releaseHistory.getClusterName()) + ") \n";
     }
@@ -111,9 +112,9 @@ public class MtgListener extends API {
     private String spliceItems(List<ItemBO> list) {
         StringBuilder sb = new StringBuilder();
         for (ItemBO item : list) {
-            sb.append(" ##### ***Key***: " + item.getItem().getKey() + " \n");
-            sb.append(" ##### ***OldValue***:\n " + item.getOldValue() + " \n");
-            sb.append(" ##### ***NewValue***:\n " + item.getNewValue() + " \n");
+            sb.append("<p><strong>Key</strong>: " + item.getItem().getKey() + " </p>\n");
+            sb.append("<p><strong>OldValue</strong>: \n" + item.getOldValue() + " </p>\n");
+            sb.append("<p><strong>NewValue</strong>: \n" + item.getNewValue() + " </p>\n");
         }
         return sb.toString();
     }
