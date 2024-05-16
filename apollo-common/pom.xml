@@ -31,6 +31,11 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20210307</version>
+        </dependency>
+        <dependency>
             <groupId>com.ctrip.framework.apollo</groupId>
             <artifactId>apollo-core</artifactId>
         </dependency>

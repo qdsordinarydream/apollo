@@ -1,6 +1,7 @@
 package com.ctrip.framework.apollo.portal.listener;
 
 import com.ctrip.framework.apollo.common.dto.EhrMessageDTO;
+import com.ctrip.framework.apollo.common.dto.MtgGalaxyEvent;
 import com.ctrip.framework.apollo.portal.api.API;
 import com.ctrip.framework.apollo.portal.component.RetryableRestTemplate;
 import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
@@ -14,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -40,6 +43,12 @@ public class MtgListener extends API {
     @Value("${ehrClientId}")
     private String ehrClientId;
 
+    @Value("${galaxyEventUrl}")
+    private String galaxyUrl;
+
+    @Value("${galaxyEventToken}")
+    private String galaxyToken;
+
     // 发送 POST 请求到钉钉机器人
     public void sendDingTalkMessage(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo) {
         if (publishInfo.getChangeItems().isEmpty()) {
@@ -61,6 +70,9 @@ public class MtgListener extends API {
 
         try {
             sendMsg(releaseHistory, publishInfo, ddUserIds);
+
+            // 灭火图事件通知
+            addGalaxyEvent(releaseHistory, publishInfo);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -193,5 +205,47 @@ public class MtgListener extends API {
         }
 
         return "";
+    }
+
+    private void addGalaxyEvent(ReleaseHistoryBO releaseHistory, ConfigPublishEvent.ConfigPublishInfo publishInfo) {
+        StringBuilder sb = new StringBuilder();
+        for (ItemBO item : publishInfo.getChangeItems()) {
+            sb.append("Key: " + item.getItem().getKey() + " \n");
+            sb.append("OldValue: " + item.getOldValue() + " \n");
+            sb.append("NewValue: " + item.getNewValue() + " \n");
+        }
+        MtgGalaxyEvent event = new MtgGalaxyEvent(
+                releaseHistory.getAppId(), releaseHistory.getClusterName(), releaseHistory.getNamespaceName(),
+                sb.toString(), releaseHistory.getOperator(),System.currentTimeMillis() / 1000);
+        sendGalaxyEvent(event);
+    }
+
+    private void sendGalaxyEvent(MtgGalaxyEvent event) {
+        String url = galaxyUrl;
+        String jsonInputString = event.toJson().toString();
+
+        try {
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-type", "application/json");
+            con.setRequestProperty("Authorization", galaxyToken);
+            con.setDoOutput(true);
+
+            try (OutputStream os = con.getOutputStream()) {
+                os.write(jsonInputString.getBytes());
+            }
+
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()))) {
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                System.out.printf("请求galaxy req :%s, resp :%s",jsonInputString, response.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
