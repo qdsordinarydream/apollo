@@ -28,7 +28,7 @@ public class MtgGalaxyEvent {
             this.changeEndTime = now;
             this.changeUserEmail = email;
             this.tags = new HashMap<>();
-            this.tags.put("appid", appid);
+            this.tags.put("service", appid);
             this.tags.put("cluster", cluster);
             this.tags.put("namespace", namespace);
         }
