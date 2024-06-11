@@ -88,9 +88,11 @@ public class ConsumerAuditUtil implements InitializingBean {
         List<ConsumerAudit> toAudit = Lists.newArrayList();
         try {
           Queues.drain(audits, toAudit, BATCH_SIZE, BATCH_TIMEOUT, BATCH_TIMEUNIT);
-          if (!toAudit.isEmpty()) {
-            consumerService.createConsumerAudits(toAudit);
-          }
+          // 这里将审计从 db 中拿掉，具体由监控来承接
+          // 这部分数据写入比较多，不适合写入 db
+//          if (!toAudit.isEmpty()) {
+//            consumerService.createConsumerAudits(toAudit);
+//          }
         } catch (Throwable ex) {
           Tracer.logError(ex);
         }

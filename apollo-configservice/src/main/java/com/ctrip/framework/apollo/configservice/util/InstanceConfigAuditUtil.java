@@ -167,16 +167,16 @@ public class InstanceConfigAuditUtil implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws Exception {
 // 因为对于当前架构业务适用性不强，所以把实例功能更新功能拿掉
-//    auditExecutorService.submit(() -> {
-//      while (!auditStopped.get() && !Thread.currentThread().isInterrupted()) {
-//        try {
-//          InstanceConfigAuditModel model = audits.take();
-//          doAudit(model);
-//        } catch (Throwable ex) {
-//          Tracer.logError(ex);
-//        }
-//      }
-//    });
+    auditExecutorService.submit(() -> {
+      while (!auditStopped.get() && !Thread.currentThread().isInterrupted()) {
+        try {
+          InstanceConfigAuditModel model = audits.take();
+          //doAudit(model);
+        } catch (Throwable ex) {
+          Tracer.logError(ex);
+        }
+      }
+    });
   }
 
   private String assembleInstanceKey(String appId, String cluster, String ip, String datacenter) {
