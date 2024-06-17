@@ -31,6 +31,10 @@ import com.ctrip.framework.apollo.portal.entity.vo.NamespaceIdentifier;
 import com.ctrip.framework.apollo.portal.service.ItemService;
 import com.ctrip.framework.apollo.portal.service.NamespaceService;
 import com.ctrip.framework.apollo.portal.spi.UserInfoHolder;
+import com.ctrip.framework.apollo.tracer.Tracer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -59,6 +63,8 @@ import static com.ctrip.framework.apollo.common.utils.RequestPrecondition.checkM
 
 @RestController
 public class ItemController {
+  @Autowired
+  private MeterRegistry meterRegistry;
 
   private final ItemService configService;
   private final NamespaceService namespaceService;
@@ -79,6 +85,14 @@ public class ItemController {
   public void modifyItemsByText(@PathVariable String appId, @PathVariable String env,
                                 @PathVariable String clusterName, @PathVariable String namespaceName,
                                 @RequestBody NamespaceTextModel model) {
+    // 监控
+    try {
+        meterRegistry.counter("item_update_total", Tags.of("appId", appId, "env", env, "cluster",
+                clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+        Tracer.logError(String.format("item update metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     model.setAppId(appId);
     model.setClusterName(clusterName);
     model.setEnv(env);
@@ -103,6 +117,14 @@ public class ItemController {
     item.setDataChangeCreatedTime(null);
     item.setDataChangeLastModifiedTime(null);
 
+    // 监控
+    try {
+      meterRegistry.counter("item_create_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item create metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     return configService.createItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 
@@ -112,6 +134,14 @@ public class ItemController {
                          @PathVariable String clusterName, @PathVariable String namespaceName,
                          @RequestBody ItemDTO item) {
     checkModel(isValidItem(item));
+
+    // 监控
+    try {
+      meterRegistry.counter("item_update_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item update metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
 
     String username = userInfoHolder.getUser().getUserId();
     item.setDataChangeLastModifiedBy(username);

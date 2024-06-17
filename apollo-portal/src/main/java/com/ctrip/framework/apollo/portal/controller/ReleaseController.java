@@ -37,6 +37,10 @@ import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
+import com.ctrip.framework.apollo.tracer.Tracer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,6 +58,9 @@ import java.util.*;
 @Validated
 @RestController
 public class ReleaseController {
+
+    @Autowired
+    private MeterRegistry meterRegistry;
 
     private final ReleaseService releaseService;
     private final ApplicationEventPublisher publisher;
@@ -88,6 +95,14 @@ public class ReleaseController {
 
         if (model.isEmergencyPublish() && !portalConfig.isEmergencyPublishAllowed(Env.valueOf(env))) {
             throw new BadRequestException("Env: %s is not supported emergency publish now", env);
+        }
+
+        // 监控
+        try {
+            meterRegistry.counter("release_total", Tags.of("appId", appId, "env", env, "cluster",
+                    clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+        } catch (Exception e) {
+            Tracer.logError(String.format("release metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
         }
 
         // 先获取当前的 namespace 信息
@@ -131,6 +146,14 @@ public class ReleaseController {
 
         if (model.isEmergencyPublish() && !portalConfig.isEmergencyPublishAllowed(Env.valueOf(env))) {
             throw new BadRequestException("Env: %s is not supported emergency publish now", env);
+        }
+
+        // 监控
+        try {
+            meterRegistry.counter("release_gray_total", Tags.of("appId", appId, "env", env, "cluster",
+                    clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+        } catch (Exception e) {
+            Tracer.logError(String.format("release metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
         }
 
         // 先获取当前的 namespace 信息

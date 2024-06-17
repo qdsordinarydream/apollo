@@ -34,6 +34,11 @@ import com.ctrip.framework.apollo.portal.service.NamespaceBranchService;
 import com.ctrip.framework.apollo.portal.service.ReleaseService;
 import com.ctrip.framework.apollo.portal.spi.UserService;
 import javax.servlet.http.HttpServletRequest;
+
+import com.ctrip.framework.apollo.tracer.Tracer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,6 +59,9 @@ public class ReleaseController {
   private final NamespaceBranchService namespaceBranchService;
   private final ConsumerPermissionValidator consumerPermissionValidator;
   private final ReleaseOpenApiService releaseOpenApiService;
+
+  @Autowired
+  private MeterRegistry meterRegistry;
 
   public ReleaseController(
       final ReleaseService releaseService,
@@ -83,6 +91,13 @@ public class ReleaseController {
       throw BadRequestException.userNotExists(model.getReleasedBy());
     }
 
+    // 监控
+    try {
+        meterRegistry.counter("release_openapi_total", Tags.of("appId", appId, "env", env,
+            "cluster", clusterName, "namespace", namespaceName, "operator", model.getReleasedBy())).increment();
+    } catch (Exception e) {
+        Tracer.logError(String.format("release metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
     return this.releaseOpenApiService.publishNamespace(appId, env, clusterName, namespaceName, model);
   }
 
@@ -127,6 +142,14 @@ public class ReleaseController {
 
         if (userService.findByUserId(model.getReleasedBy()) == null) {
             throw BadRequestException.userNotExists(model.getReleasedBy());
+        }
+
+        // 监控
+        try {
+            meterRegistry.counter("release_openapi_gray_total", Tags.of("appId", appId, "env", env,
+                    "cluster", clusterName, "namespace", namespaceName, "operator", model.getReleasedBy())).increment();
+        } catch (Exception e) {
+            Tracer.logError(String.format("release metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
         }
 
         NamespaceReleaseModel releaseModel = BeanUtils.transform(NamespaceReleaseModel.class, model);
