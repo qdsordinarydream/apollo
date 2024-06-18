@@ -79,7 +79,7 @@ public class PortalApplication {
     // 触发初始化
     try (Entry entry = SphU.entry("release")) {
     } catch (BlockException e) {
-      System.out.println("blocked!");
+      throw new RuntimeException("Failed to initialize flow rules", e);
     }
   }
 }
