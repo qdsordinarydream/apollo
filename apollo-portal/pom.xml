@@ -32,6 +32,12 @@
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.alibaba.csp</groupId>
+			<artifactId>sentinel-core</artifactId>
+			<version>1.6.1</version>
+		</dependency>
+
 <!--		钉钉openapi-->
 		<dependency>
 			<groupId>com.aliyun</groupId>

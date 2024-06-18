@@ -16,8 +16,15 @@
  */
 package com.ctrip.framework.apollo.portal;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.ctrip.framework.apollo.common.ApolloCommonConfig;
 import com.ctrip.framework.apollo.openapi.PortalOpenApiConfig;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.ldap.LdapAutoConfiguration;
@@ -26,6 +33,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+
+import javax.annotation.PostConstruct;
+
 @EnableAspectJAutoProxy
 @Configuration
 @EnableAutoConfiguration(exclude = {LdapAutoConfiguration.class})
@@ -33,8 +46,40 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ComponentScan(basePackageClasses = {ApolloCommonConfig.class,
     PortalApplication.class, PortalOpenApiConfig.class})
 public class PortalApplication {
+  @Value("${releaseQuota}")
+  private Integer requestQps;
+
+  private static PortalApplication instance;
+
+  @PostConstruct
+  public void fillInstance() {
+    instance = this;
+  }
+  public static Integer getRequestQps() {
+    return instance.requestQps;
+  }
 
   public static void main(String[] args) throws Exception {
     SpringApplication.run(PortalApplication.class, args);
+
+    initFlowQpsRule();
+  }
+
+  private static void initFlowQpsRule() {
+    List<FlowRule> rules = new ArrayList<>();
+    FlowRule rule = new FlowRule();
+    rule.setResource("release");
+
+    rule.setCount(instance.requestQps);
+    rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+    rule.setLimitApp("default");
+    rules.add(rule);
+    FlowRuleManager.loadRules(rules);
+
+    // 触发初始化
+    try (Entry entry = SphU.entry("release")) {
+    } catch (BlockException e) {
+      System.out.println("blocked!");
+    }
   }
 }

@@ -16,6 +16,9 @@
  */
 package com.ctrip.framework.apollo.openapi.v1.controller;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.ctrip.framework.apollo.common.dto.ReleaseDTO;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.common.utils.BeanUtils;
@@ -83,6 +86,12 @@ public class ReleaseController {
                                       @PathVariable String namespaceName,
                                       @RequestBody NamespaceReleaseDTO model,
                                       HttpServletRequest request) {
+    try (Entry entry = SphU.entry("release")) {
+    } catch (BlockException e) {
+        meterRegistry.counter("quota_total", Tags.of("interface_name", "release", "appId", appId, "env", env,
+                "cluster", clusterName, "namespace", namespaceName, "operator", model.getReleasedBy())).increment();
+        throw new BadRequestException("Blocked by Sentinel: " + e.getClass().getSimpleName());
+    }
     RequestPrecondition.checkArguments(!StringUtils.isContainEmpty(model.getReleasedBy(), model
             .getReleaseTitle()),
         "Params(releaseTitle and releasedBy) can not be empty");
