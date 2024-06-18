@@ -73,6 +73,10 @@ public class PortalApplication {
     rule.setCount(instance.requestQps);
     rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
     rule.setLimitApp("default");
+    // 漏桶模式,排队超时为 20s
+    rule.setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER);
+    rule.setMaxQueueingTimeMs(20 * 1000);
+
     rules.add(rule);
     FlowRuleManager.loadRules(rules);
 
