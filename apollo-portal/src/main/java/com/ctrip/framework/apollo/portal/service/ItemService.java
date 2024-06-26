@@ -154,8 +154,8 @@ public class ItemService {
         return itemAPI.createCommentItem(appId, env, clusterName, namespaceName, item);
     }
 
-    public void updateItem(String appId, Env env, String clusterName, String namespaceName, ItemDTO item) {
-        itemAPI.updateItem(appId, env, clusterName, namespaceName, item.getId(), item);
+    public void updateItem(String appId, Env env, String clusterName, String namespaceName, ItemDTO item, boolean notCommit) {
+        itemAPI.updateItem(appId, env, clusterName, namespaceName, item.getId(), item, notCommit);
     }
 
     public void deleteItem(Env env, long itemId, String userId) {

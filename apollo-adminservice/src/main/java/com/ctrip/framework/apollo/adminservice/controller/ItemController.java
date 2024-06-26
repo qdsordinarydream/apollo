@@ -41,14 +41,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class ItemController {
@@ -121,7 +114,8 @@ public class ItemController {
                         @PathVariable("clusterName") String clusterName,
                         @PathVariable("namespaceName") String namespaceName,
                         @PathVariable("itemId") long itemId,
-                        @RequestBody ItemDTO itemDTO) {
+                        @RequestBody ItemDTO itemDTO,
+                        @RequestParam(defaultValue = "false") boolean notCommit) {
     Item managedEntity = itemService.findOne(itemId);
     if (managedEntity == null) {
       throw NotFoundException.itemNotFound(appId, clusterName, namespaceName, itemId);
@@ -149,7 +143,7 @@ public class ItemController {
     builder.updateItem(beforeUpdateItem, entity);
     itemDTO = BeanUtils.transform(ItemDTO.class, entity);
 
-    if (builder.hasContent()) {
+    if (!notCommit && builder.hasContent()) {
       commitService.createCommit(appId, clusterName, namespaceName, builder.build(), itemDTO.getDataChangeLastModifiedBy());
     }
 
