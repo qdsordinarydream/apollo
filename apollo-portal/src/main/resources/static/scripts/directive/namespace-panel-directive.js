@@ -16,7 +16,7 @@
  */
 directive_module.directive('apollonspanel', directive);
 
-function directive($window, $translate, toastr, AppUtil, EventManager, PermissionService, NamespaceLockService,
+function directive($rootScope, $window, $translate, toastr, AppUtil, EventManager, PermissionService, NamespaceLockService,
     UserService, CommitService, ReleaseService, InstanceService, NamespaceBranchService, ConfigService, NamespaceService) {
     return {
         restrict: 'E',
@@ -84,6 +84,7 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
 
             scope.publish = publish;
             scope.mergeAndPublish = mergeAndPublish;
+            scope.clustersPublish = clustersPublish;
             scope.addRuleItem = addRuleItem;
             scope.editRuleItem = editRuleItem;
 
@@ -918,7 +919,43 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
             }
 
             //normal release and gray release
+            // 通过 $translate 服务获取翻译后的值
+            // $translate('Config.EnvList').then(function (translation) {
+            //     $scope.envListTranslation = translation;
+            // });
+
+            function clustersPublish(namespace) {
+                // console.log('clustersPublish function triggered for scope: ', scope);
+                // console.log('rootScope: ', $rootScope);
+
+                if (!namespace.hasReleasePermission) {
+                    AppUtil.showModal('#releaseNoPermissionDialog');
+                    return;
+                } else if (namespace.lockOwner && scope.user == namespace.lockOwner) {
+                    //can not publish if config modified by himself
+                    EventManager.emit(EventManager.EventType.PUBLISH_DENY, {
+                        namespace: namespace,
+                        mergeAndPublish: false
+                    });
+                    return;
+                }
+
+                namespace.mergeAndPublish = false;
+                var envMapClusters = {};
+                envClusters = $rootScope.envMapClusters
+                EventManager.emit(EventManager.EventType.PUBLISH_NAMESPACE,
+                    {
+                        namespace: namespace,
+                        isClustersPublish: true,
+                        envClusters: envClusters
+                    });
+            }
+
             function publish(namespace) {
+                // console.log('Publish function triggered for scope: ', scope);
+                // console.log('pageContext: ', $rootScope.pageContext);
+                // console.log('$rootScope: ', $rootScope.envMapClusters);
+
                 if (!namespace.hasReleasePermission) {
                     AppUtil.showModal('#releaseNoPermissionDialog');
                     return;

@@ -22,6 +22,8 @@ function releaseModalDirective($translate, toastr, AppUtil, EventManager, Releas
         templateUrl: AppUtil.prefixPath() + '/views/component/release-modal.html',
         transclude: true,
         replace: true,
+        isClustersPublish: false,
+        clusters: [],
         scope: {
             appId: '=',
             env: '=',
@@ -39,10 +41,11 @@ function releaseModalDirective($translate, toastr, AppUtil, EventManager, Releas
 
             EventManager.subscribe(EventManager.EventType.PUBLISH_NAMESPACE,
                 function (context) {
-
                     var namespace = context.namespace;
                     scope.toReleaseNamespace = context.namespace;
                     scope.isEmergencyPublish = !!context.isEmergencyPublish;
+                    scope.isClustersPublish = context.isClustersPublish
+                    scope.clusters = context.envClusters
 
                     var date = new Date().Format("yyyyMMddhhmmss");
                     if (namespace.mergeAndPublish) {
@@ -61,7 +64,9 @@ function releaseModalDirective($translate, toastr, AppUtil, EventManager, Releas
                     mergeAndPublish();
                 } else if (scope.toReleaseNamespace.isBranch) {
                     grayPublish();
-                } else {
+                } else if (scope.isClustersPublish) {
+                    clustersPublish();
+                }else {
                     publish();
                 }
 
@@ -93,6 +98,44 @@ function releaseModalDirective($translate, toastr, AppUtil, EventManager, Releas
                         }
                     );
 
+            }
+
+            function clustersPublish() {
+                publish();
+                if (Object.keys(scope.clusters).length === 0) {
+                    return;
+                }
+
+                for (var clusters in scope.clusters) {
+                    console.log("clusters: ", clusters)
+                    var clustersArray = scope.clusters[clusters].split(',');
+                    for (var i = 0; i < clustersArray.length; i++) {
+                        var cluster = clustersArray[i];
+                        console.log("cluster: ", cluster);
+                        ReleaseService.publish(scope.appId, scope.env, cluster,
+                            scope.toReleaseNamespace.baseInfo.namespaceName,
+                            scope.toReleaseNamespace.releaseTitle,
+                            scope.releaseComment,
+                            scope.isEmergencyPublish).then(
+                            function (result) {
+                                AppUtil.hideModal('#releaseModal');
+                                toastr.success($translate.instant('ReleaseModal.Published'));
+
+                                scope.releaseBtnDisabled = false;
+
+                                EventManager.emit(EventManager.EventType.REFRESH_NAMESPACE,
+                                    {
+                                        namespace: scope.toReleaseNamespace
+                                    })
+
+                            }, function (result) {
+                                scope.releaseBtnDisabled = false;
+                                toastr.error(AppUtil.errorMsg(result), $translate.instant('ReleaseModal.PublishFailed'));
+
+                            }
+                        );
+                    }
+                }
             }
 
             function grayPublish() {
