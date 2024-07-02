@@ -106,9 +106,12 @@ function releaseModalDirective($translate, toastr, AppUtil, EventManager, Releas
                     return;
                 }
 
-                for (var clusters in scope.clusters) {
-                    console.log("clusters: ", clusters)
-                    var clustersArray = scope.clusters[clusters].split(',');
+                for (var env in scope.clusters) {
+                    console.log("release env: ", env, scope.env)
+                    if (env !== scope.env) {
+                        continue;
+                    }
+                    var clustersArray = scope.clusters[env].split(',');
                     for (var i = 0; i < clustersArray.length; i++) {
                         var cluster = clustersArray[i];
                         console.log("cluster: ", cluster);
