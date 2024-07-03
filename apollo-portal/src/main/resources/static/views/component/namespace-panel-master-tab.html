@@ -70,14 +70,14 @@
                 </button>
                 <button type="button" class="btn btn-primary btn-sm" data-tooltip="tooltip" data-placement="bottom"
                         title="{{'Component.Namespace.Master.Items.AllClusterPublishTips' | translate }}"
-                        ng-show="(namespace.hasReleasePermission || namespace.hasModifyPermission) && cluster == 'default'"
+                        ng-show="(namespace.hasReleasePermission) && cluster == 'default'"
                         ng-disabled="namespace.isTextEditing" ng-click="clustersPublish(namespace)">
                     <img src="img/release.png">
                     {{'Component.Namespace.Master.Items.AllClusterPublish' | translate }}
                 </button>
                 <button type="button" class="btn btn-success btn-sm" data-tooltip="tooltip" data-placement="bottom"
                     title="{{'Component.Namespace.Master.Items.PublishTips' | translate }}"
-                    ng-show="(namespace.hasReleasePermission || namespace.hasModifyPermission)"
+                    ng-show="(namespace.hasReleasePermission)"
                     ng-disabled="namespace.isTextEditing" ng-click="publish(namespace)">
                     <img src="img/release.png">
                     {{'Component.Namespace.Master.Items.Publish' | translate }}
