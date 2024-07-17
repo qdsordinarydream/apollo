@@ -198,10 +198,10 @@
                         data-clipboard-text="{{namespace.text}}" data-tooltip="tooltip" data-placement="bottom"
                         title="{{'Component.Namespace.Master.Items.CopyText' | translate }}"
                         ng-show="!namespace.isTextEditing && namespace.viewType == 'text' && namespace.hasModifyPermission">
-                    <img src="img/syntax.png" class="ns_btn cursor-pointer" data-tooltip="tooltip"
-                        data-placement="bottom" title="{{'Component.Namespace.Master.Items.GrammarCheck' | translate }}"
-                        ng-show="namespace.isTextEditing && namespace.viewType == 'text' && namespace.isSyntaxCheckable"
-                        ng-click="syntaxCheck(namespace)">
+<!--                    <img src="img/syntax.png" class="ns_btn cursor-pointer" data-tooltip="tooltip"-->
+<!--                        data-placement="bottom" title="{{'Component.Namespace.Master.Items.GrammarCheck' | translate }}"-->
+<!--                        ng-show="namespace.isTextEditing && namespace.viewType == 'text' && namespace.isSyntaxCheckable"-->
+<!--                        ng-click="syntaxCheck(namespace)">-->
                     &nbsp;
                     <img src="img/cancel.png" class="ns_btn cursor-pointer" data-tooltip="tooltip"
                         data-placement="bottom"
@@ -217,7 +217,7 @@
                     <img src="img/submit.png" class="ns_btn cursor-pointer" data-tooltip="tooltip"
                         data-placement="bottom"
                         title="{{'Component.Namespace.Master.Items.SummitChanged' | translate }}" data-toggle="modal"
-                        data-target="#commitModal" ng-show="namespace.isTextEditing && namespace.viewType == 'text'"
+                        data-target="#commitModal" ng-show="namespace.isTextEditing && namespace.viewType == 'text' && namespace.formatValid"
                         ng-click="modifyByText(namespace)">
 
                     <button type="button" class="btn btn-default btn-sm" data-tooltip="tooltip" data-placement="bottom"
