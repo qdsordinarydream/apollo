@@ -779,7 +779,6 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                                 function (result) {
                                 },
                                 function (result) {
-                                    console.log("错误 222");
                                     failed = true;
                                     reject(failed);
                                 });
@@ -788,7 +787,6 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                         }
                         resolve(!failed);
                     } catch (e) {
-                        console.log("错误 11111");
                         reject(false);
                     }
                 });
