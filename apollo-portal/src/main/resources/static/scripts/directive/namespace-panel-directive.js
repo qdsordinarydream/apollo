@@ -757,8 +757,45 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                     + "&namespaceName=" + namespace.baseInfo.namespaceName;
             }
 
+            function checkTxtValid(namespace) {
+                return new Promise(async (resolve, reject) => {
+                    let suffix = namespace.format;
+                    let itemVal = namespace.editText;
+                    let failed = false;
+
+                    try {
+                        if (suffix === 'yml' || suffix === 'yaml' || suffix === 'xml') {
+                            var model = {
+                                configText: itemVal,
+                                namespaceId: namespace.baseInfo.id,
+                                format: namespace.format
+                            };
+
+                            await ConfigService.syntax_check_text_v2(scope.appId,
+                                scope.env,
+                                scope.cluster,
+                                namespace.baseInfo.namespaceName,
+                                model).then(
+                                function (result) {
+                                },
+                                function (result) {
+                                    console.log("错误 222");
+                                    failed = true;
+                                    reject(failed);
+                                });
+                        } else if (suffix === 'json') {
+                            JSON.parse(itemVal);
+                        }
+                        resolve(!failed);
+                    } catch (e) {
+                        console.log("错误 11111");
+                        reject(false);
+                    }
+                });
+            }
+
             // 提交修改
-            function modifyByText(namespace) {
+            async function modifyByText(namespace) {
 
                 var model = {
                     configText: namespace.editText,
@@ -770,6 +807,20 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                 if (namespace.commitChangeBtnDisabled) {
                     return;
                 }
+
+                // check valid
+                try {
+                    let valid = await checkTxtValid(namespace)
+                    // console.log(valid)
+                    if (!valid) {
+                        AppUtil.showModal('#syntaxCheckFailedDialog');
+                        return
+                    }
+                }catch (e) {
+                    AppUtil.showModal('#syntaxCheckFailedDialog');
+                    return
+                }
+
                 namespace.commitChangeBtnDisabled = true;
                 ConfigService.modify_items(scope.appId,
                     scope.env,
@@ -1043,40 +1094,6 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                     })
                 },
                 onChange: function (e) {
-                    // 编辑状态需要进行状态校验
-                    if (scope.namespace.isTextEditing) {
-                        let suffix = ''
-                        suffix = scope.namespace.format
-                        scope.namespace.formatValid = true
-                        let itemVal = e[1].session.getValue()
-
-                        try {
-                            //console.log("尝试校验:"+scope.namespace.format);
-                            if (suffix === 'yml' || suffix === 'yaml' || suffix === 'xml') {
-                                var model = {
-                                    configText: itemVal,
-                                    namespaceId: scope.namespace.baseInfo.id,
-                                    format: scope.namespace.format
-                                };
-                                ConfigService.syntax_check_text_v2(scope.appId,
-                                    scope.env,
-                                    scope.cluster,
-                                    scope.namespace.baseInfo.namespaceName,
-                                    model).then(
-                                        function (result) {},
-                                        function (result) {
-                                            //console.log("没有通过校验")
-                                            scope.namespace.formatValid = false
-                                        })
-                            } else if (suffix === 'json') {
-                                JSON.parse(itemVal)
-                            }
-                        } catch (e) {
-                            //console.log("不符合要求:"+scope.namespace.format);
-                            scope.namespace.formatValid = false
-                        }
-                    }
-
                     if ((e[0].action === 'insert') && (scope.namespace.hasOwnProperty("editText"))) {
                         scope.namespace.editText = e[1].session.getValue();
                     }
