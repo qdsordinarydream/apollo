@@ -805,7 +805,7 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                 // check valid
                 try {
                     let valid = await checkTxtValid(namespace)
-                    console.log(valid)
+                    //console.log(valid)
                     if (!valid) {
                         wantToModifyNs = namespace;
                         AppUtil.showModal('#syntaxCheckFailedDialogV2');
@@ -820,7 +820,7 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
 
             EventManager.subscribe(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED_V2, function (context) {
                 if (wantToModifyNs && wantToModifyNs.baseInfo && wantToModifyNs.baseInfo.namespaceName === scope.namespace.baseInfo.namespaceName) {
-                    console.log(wantToModifyNs);
+                    //console.log(wantToModifyNs);
                     modifyByText(wantToModifyNs);
                     wantToModifyNs = null;
                 }
