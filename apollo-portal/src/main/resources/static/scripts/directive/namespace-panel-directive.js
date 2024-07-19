@@ -811,11 +811,15 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                     let valid = await checkTxtValid(namespace)
                     // console.log(valid)
                     if (!valid) {
-                        AppUtil.showModal('#syntaxCheckFailedDialog');
+                        EventManager.emit(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED, {
+                            syntaxCheckMessage: "不合格的"+namespace.format+"格式"
+                        });
                         return
                     }
-                }catch (e) {
-                    AppUtil.showModal('#syntaxCheckFailedDialog');
+                } catch (e) {
+                    EventManager.emit(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED, {
+                        syntaxCheckMessage: "不合格的"+namespace.format+"格式"
+                    });
                     return
                 }
 
