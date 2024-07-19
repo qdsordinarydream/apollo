@@ -389,6 +389,7 @@
   "Config.ClusterIsCustomTipContent": "属于 '{{name}}' 集群的实例只会使用 '{{name}}' 集群（当前页面）的配置，只有当对应 Namespace 在当前集群没有发布过配置时，才会使用 default 集群的配置。",
   "Config.HasNotPublishNamespace": "以下环境/集群有未发布的配置，客户端获取不到未发布的配置，请及时发布。",
   "Config.RevokeItem.DialogTitle": "撤销配置",
+  "Config.Invalid.DialogTitle": "配置校验失败，确认要继续提交吗？",
   "Config.RevokeItem.DialogContent": "当前命名空间下已修改但尚未发布的配置将被撤销，确定要撤销么?",
   "Config.DeleteItem.DialogTitle": "删除配置",
   "Config.DeleteItem.DialogContent": "您正在删除 Key 为 <b> '{{config.key}}' </b> Value 为 <b> '{{config.value}}' </b> 的配置，<br>确定要删除配置吗?",

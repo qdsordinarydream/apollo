@@ -73,6 +73,7 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
             scope.goToSyncPage = goToSyncPage;
             scope.goToDiffPage = goToDiffPage;
             scope.modifyByText = modifyByText;
+            scope.modifyByTextV2 = modifyByTextV2;
             // 以前的检测
             scope.syntaxCheck = syntaxCheck;
             scope.goToParentAppConfigPage = goToParentAppConfigPage;
@@ -792,6 +793,35 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                 });
             }
 
+            async function modifyByTextV2(namespace) {
+                if (namespace.format === 'properties' || namespace.format === 'txt') {
+                    modifyByText(namespace);
+                    return
+                }
+
+                // check valid
+                try {
+                    let valid = await checkTxtValid(namespace)
+                    // console.log(valid)
+                    if (!valid) {
+                        AppUtil.showModal('#syntaxCheckFailedDialogV2');
+                    }
+                } catch (e) {
+                    AppUtil.showModal('#syntaxCheckFailedDialogV2');
+                }
+
+                wantToModifyNs = namespace;
+            }
+
+            let wantToModifyNs;
+
+            EventManager.subscribe(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED_V2, function (context) {
+                if (wantToModifyNs && wantToModifyNs.baseInfo && wantToModifyNs.baseInfo.namespaceName === scope.namespace.baseInfo.namespaceName) {
+                    modifyByText(scope.namespace);
+                    wantToModifyNs = null;
+                }
+            });
+
             // 提交修改
             async function modifyByText(namespace) {
 
@@ -800,28 +830,6 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                     namespaceId: namespace.baseInfo.id,
                     format: namespace.format
                 };
-
-                //prevent repeat submit
-                if (namespace.commitChangeBtnDisabled) {
-                    return;
-                }
-
-                // check valid
-                try {
-                    let valid = await checkTxtValid(namespace)
-                    // console.log(valid)
-                    if (!valid) {
-                        EventManager.emit(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED, {
-                            syntaxCheckMessage: "不合格的"+namespace.format+"格式"
-                        });
-                        return
-                    }
-                } catch (e) {
-                    EventManager.emit(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED, {
-                        syntaxCheckMessage: "不合格的"+namespace.format+"格式"
-                    });
-                    return
-                }
 
                 namespace.commitChangeBtnDisabled = true;
                 ConfigService.modify_items(scope.appId,

@@ -41,6 +41,8 @@ function controller($rootScope, $scope, $translate, toastr, AppUtil, EventManage
 
     $scope.promptReview = promptReview;
 
+    $scope.sendModify = sendModify;
+
     init();
 
     function init() {
@@ -48,6 +50,11 @@ function controller($rootScope, $scope, $translate, toastr, AppUtil, EventManage
         initUser();
         initPublishInfo();
     }
+
+    function sendModify() {
+        EventManager.emit(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED_V2);
+    }
+
     function initRole() {
         PermissionService.get_app_role_users($rootScope.pageContext.appId)
             .then(function (result) {
