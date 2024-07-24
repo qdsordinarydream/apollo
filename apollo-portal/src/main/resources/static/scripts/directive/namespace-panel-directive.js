@@ -838,7 +838,7 @@ function directive($rootScope, $window, $translate, toastr, AppUtil, EventManage
                 namespace.commitChangeBtnDisabled = true;
                 ConfigService.modify_items(scope.appId,
                     scope.env,
-                    scope.cluster,
+                    namespace.baseInfo.clusterName,
                     namespace.baseInfo.namespaceName,
                     model).then(
                         function (result) {
