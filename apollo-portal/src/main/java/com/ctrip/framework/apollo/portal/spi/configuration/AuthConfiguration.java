@@ -88,7 +88,7 @@ public class AuthConfiguration {
 
   private static final String[] BY_PASS_URLS = {"/prometheus/**", "/metrics/**", "/openapi/**",
       "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**", "/i18n/**", "/prefix-path",
-      "/health"};
+      "/health", "/login.html", "/signin/**"};
 
   /**
    * spring.profiles.active = auth
