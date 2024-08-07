@@ -32,6 +32,9 @@ import com.ctrip.framework.apollo.portal.spi.defaultimpl.DefaultUserService;
 import com.ctrip.framework.apollo.portal.spi.ldap.ApolloLdapAuthenticationProvider;
 import com.ctrip.framework.apollo.portal.spi.ldap.FilterLdapByGroupUserSearch;
 import com.ctrip.framework.apollo.portal.spi.ldap.LdapUserService;
+import com.ctrip.framework.apollo.portal.spi.mtgsso.MTGPasswordEncoder;
+import com.ctrip.framework.apollo.portal.spi.mtgsso.MTGSSOUserInfoHolder;
+import com.ctrip.framework.apollo.portal.spi.mtgsso.MTGSSOUserService;
 import com.ctrip.framework.apollo.portal.spi.oidc.ExcludeClientCredentialsClientRegistrationRepository;
 import com.ctrip.framework.apollo.portal.spi.oidc.OidcAuthenticationSuccessEventListener;
 import com.ctrip.framework.apollo.portal.spi.oidc.OidcLocalUserService;
@@ -49,6 +52,7 @@ import javax.sql.DataSource;
 
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
@@ -63,6 +67,7 @@ import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.LdapOperations;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -423,10 +428,91 @@ public class AuthConfiguration {
   }
 
   /**
+   *
+   * spring.profiles.active = mtgsso
+   */
+  @Configuration
+  @Profile("mtgsso")
+  @EnableConfigurationProperties({LdapProperties.class,LdapExtendProperties.class})
+  static class MTGSSOAuthAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean(SsoHeartbeatHandler.class)
+    public SsoHeartbeatHandler defaultSsoHeartbeatHandler() {
+      return new DefaultSsoHeartbeatHandler();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(UserInfoHolder.class)
+    public UserInfoHolder springSecurityUserInfoHolder(UserService userService) {
+      System.out.println("springSecurityUserInfoHolder");
+      return new MTGSSOUserInfoHolder(userService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(PasswordEncoder.class)
+    public static PasswordEncoder passwordEncoder() {
+      System.out.println("MTGpasswordEncoder");
+      return new MTGPasswordEncoder();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(LogoutHandler.class)
+    public LogoutHandler logoutHandler() {
+      return new DefaultLogoutHandler();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(UserService.class)
+    public UserService springSecurityUserService(PasswordEncoder passwordEncoder,
+                                                 UserRepository userRepository, AuthorityRepository authorityRepository) {
+      return new MTGSSOUserService(passwordEncoder, userRepository, authorityRepository);
+    }
+  }
+
+  @Order(99)
+  @Profile("mtgsso")
+  @Configuration
+  @EnableWebSecurity
+  @EnableGlobalMethodSecurity(prePostEnabled = true)
+  static class SpringSecurityMTGSSOConfigurer extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private MTGSSOUserService springSecurityUserService;
+
+    @Bean
+    public DaoAuthenticationProvider mtgssoAuthProvider() {
+      DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+      provider.setUserDetailsService(springSecurityUserService);
+      provider.setPasswordEncoder(MTGSSOAuthAutoConfiguration.passwordEncoder());
+      return provider;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+      http.csrf().disable();
+      http.headers().frameOptions().sameOrigin();
+      http.authorizeRequests()
+              .antMatchers(BY_PASS_URLS).permitAll()
+              .antMatchers("/**").authenticated();
+      http.formLogin().loginPage("/signin").defaultSuccessUrl("/", true).permitAll().failureUrl("/signin?#/error").and()
+              .httpBasic();
+      http.logout().logoutUrl("/user/logout").invalidateHttpSession(true).clearAuthentication(true)
+              .logoutSuccessUrl("/signin?#/logout");
+      http.exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/signin"));
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+      auth.authenticationProvider(mtgssoAuthProvider());
+    }
+  }
+
+  /**
    * default profile
    */
   @Configuration
-  @ConditionalOnMissingProfile({"ctrip", "auth", "ldap", "oidc"})
+  @ConditionalOnMissingProfile({"ctrip", "auth", "ldap", "oidc", "mtgsso"})
   static class DefaultAuthAutoConfiguration {
 
     @Bean
@@ -454,7 +540,7 @@ public class AuthConfiguration {
     }
   }
 
-  @ConditionalOnMissingProfile({"auth", "ldap", "oidc"})
+  @ConditionalOnMissingProfile({"auth", "ldap", "oidc", "mtgsso"})
   @Configuration
   @EnableWebSecurity
   @EnableGlobalMethodSecurity(prePostEnabled = true)
