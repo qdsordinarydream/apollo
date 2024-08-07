@@ -19,6 +19,7 @@ package com.ctrip.framework.apollo.portal.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * @author lepdou 2017-08-30
@@ -28,8 +29,11 @@ public class SignInController {
 
   @GetMapping("/signin")
   public String login(@RequestParam(value = "error", required = false) String error,
-                      @RequestParam(value = "logout", required = false) String logout) {
-    return "login.html";
+                      @RequestParam(value = "logout", required = false) String logout,
+                      @RequestParam(value = "code", required = false) String code,
+                      RedirectAttributes redirectAttributes) {
+    redirectAttributes.addAttribute("code", code);
+    return "redirect:/login.html";
   }
 
 }

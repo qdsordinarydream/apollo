@@ -16,14 +16,19 @@
  */
 package com.ctrip.framework.apollo.portal.spi.mtgsso;
 
+import com.ctrip.framework.apollo.common.dto.MaxConnectDTO;
 import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.core.utils.StringUtils;
+import com.ctrip.framework.apollo.portal.component.RetryableRestTemplate;
 import com.ctrip.framework.apollo.portal.entity.bo.UserInfo;
 import com.ctrip.framework.apollo.portal.entity.po.Authority;
 import com.ctrip.framework.apollo.portal.entity.po.UserPO;
 import com.ctrip.framework.apollo.portal.repository.AuthorityRepository;
 import com.ctrip.framework.apollo.portal.repository.UserRepository;
 import com.ctrip.framework.apollo.portal.spi.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,6 +38,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,12 +50,18 @@ import java.util.stream.Collectors;
  */
 @Component
 public class MTGSSOUserService implements UserService, UserDetailsService {
+  private Logger logger = LoggerFactory.getLogger(RetryableRestTemplate.class);
 
   private final PasswordEncoder passwordEncoder;
 
   private final UserRepository userRepository;
 
   private final AuthorityRepository authorityRepository;
+
+  private final String connectAppKey = "e0046a3ed06ea274b184e9c6a2c8253d";
+  private final String connectAppSecret = "JaxvTxDVPqOWCrtSfNKgyQ";
+  private final String connectTokenUri = "https://connect.spotmaxtech.com/api/v1/connect/token";
+  private final String connectUserInfoUri = "https://connect.spotmaxtech.com/api/v1/connect/user_info";
 
   public MTGSSOUserService(
           PasswordEncoder passwordEncoder,
@@ -62,7 +77,13 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
     // 验证之后回调xx接口
     // xx接口写入登陆态
     // 刷新页面
-    System.out.println("成功************");
+    System.out.println("************ code: " + username);
+
+    String userInfo = getUserInfo(username);
+    if (Objects.equals(userInfo, "")) {
+      throw new UsernameNotFoundException("User " + username + " was not found in the database");
+    }
+
     UserPO user = userRepository.findByUsername(username);
     if (user == null) {
       user = new UserPO();
@@ -89,6 +110,111 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
             AuthorityUtils.createAuthorityList("ROLE_user")
     );
   };
+
+  public String getUserInfo(String username) {
+    String token = getMaxConnectToken(username);
+    if (token == null || token.equals("")) {
+      return "";
+    }
+    return getUserInfoByToken(token);
+  }
+
+  public String getUserInfoByToken(String token) {
+    Map<String, String> signMap = new HashMap<>();
+    long timestamp = System.currentTimeMillis()/1000;
+    signMap.put("appkey", connectAppKey);
+    signMap.put("access_token", token);
+    signMap.put("timestamp", Long.toString(timestamp));
+    String sign = generateSignature(signMap, connectAppSecret);
+    
+    try {
+      String params = String.format("appkey=%s&access_token=%s&timestamp=%s&sign=%s",
+              connectAppKey, token, timestamp, sign);
+
+      URL url = new URL(connectUserInfoUri +"?"+params);
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+      connection.setRequestMethod("GET");
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        MaxConnectDTO.UserInfo responseObj = objectMapper.readValue(connection.getInputStream(),  MaxConnectDTO.UserInfo.class);
+        String email = responseObj.getThird_party_info().getProfiles().getEmail();
+        if (!Objects.equals(email, "")) {
+          return email;
+        }
+
+        return "";
+      } else {
+        logger.error("GET请求未成功, url: " + connectTokenUri +"?"+params + ", responseCode: " + responseCode);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "";
+  }
+
+  public String getMaxConnectToken(String username) {
+    Map<String, String> signMap = new HashMap<>();
+    long timestamp = System.currentTimeMillis()/1000;
+    signMap.put("appkey", connectAppKey);
+    signMap.put("code", username);
+    signMap.put("timestamp", Long.toString(timestamp));
+    String sign = generateSignature(signMap, connectAppSecret);
+    try {
+      String params = String.format("appkey=%s&code=%s&timestamp=%s&sign=%s",
+              connectAppKey, username, timestamp, sign);
+
+      URL url = new URL(connectTokenUri +"?"+params);
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+      connection.setRequestMethod("GET");
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        MaxConnectDTO.MaxConnectTokenDTO responseObj = objectMapper.readValue(connection.getInputStream(),  MaxConnectDTO.MaxConnectTokenDTO.class);
+        if (!Objects.equals(responseObj.getAccess_token(), "")) {
+          return responseObj.getAccess_token();
+        }
+
+        return "";
+      } else {
+        logger.error("GET请求未成功, url: " + connectTokenUri +"?"+params + ", responseCode: " + responseCode);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "";
+  }
+
+  // 生成对应的签名
+  public static String generateSignature(Map<String, String> params, String secret) {
+    List<String> keys = new ArrayList<>(params.keySet());
+    Collections.sort(keys);
+
+    StringBuilder kvList = new StringBuilder();
+    for (String key : keys) {
+      kvList.append(key).append("=").append(params.get(key));
+    }
+    kvList.append(secret);
+
+    return md5(kvList.toString());
+  }
+
+  private static String md5(String input) {
+    try {
+      MessageDigest md = MessageDigest.getInstance("MD5");
+      byte[] messageDigest = md.digest(input.getBytes());
+      StringBuilder sb = new StringBuilder();
+      for (byte b : messageDigest) {
+        sb.append(String.format("%02x", b));
+      }
+      return sb.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Transactional
   public void create(UserPO user) {
