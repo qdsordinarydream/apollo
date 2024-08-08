@@ -74,24 +74,22 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
   }
 
   @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    // 验证之后回调xx接口
-    // xx接口写入登陆态
-    // 刷新页面
-    System.out.println("************ code: " + username);
-
-    String userInfo = getUserInfo(username);
-    if (Objects.equals(userInfo, "")) {
-      throw new UsernameNotFoundException("User " + username + " was not found in the database");
+  public UserDetails loadUserByUsername(String authcode) throws UsernameNotFoundException {
+    MaxConnectDTO.UserInfo userInfo = getUserInfo(authcode);
+    if (userInfo == null || Objects.equals(userInfo.getThird_party_info().getProfiles().getEmail(), "")) {
+      throw new UsernameNotFoundException("User " + authcode + " was not found in the database");
     }
+    System.out.println("user info: " + userInfo.getThird_party_info().getProfiles());
 
-    UserPO user = userRepository.findByUsername(userInfo);
+    String username = userInfo.getThird_party_info().getProfiles().getEmail();
+    String userDisplayName = userInfo.getThird_party_info().getProfiles().getUsername();
+    UserPO user = userRepository.findByUsername(username);
     if (user == null) {
       user = new UserPO();
-      user.setPassword("configcenter_default");
       user.setUsername(username);
+      user.setPassword("configcenter_default");
       user.setEmail(username);
-      user.setUserDisplayName(username);
+      user.setUserDisplayName(userDisplayName);
       user.setEnabled(1);
       this.create(user);
 
@@ -112,15 +110,15 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
     );
   };
 
-  public String getUserInfo(String username) {
-    String token = getMaxConnectToken(username);
+  public MaxConnectDTO.UserInfo getUserInfo(String authcode) {
+    String token = getMaxConnectToken(authcode);
     if (token == null || token.equals("")) {
-      return "";
+      return null;
     }
     return getUserInfoByToken(token);
   }
 
-  public String getUserInfoByToken(String token) {
+  public MaxConnectDTO.UserInfo getUserInfoByToken(String token) {
     Map<String, String> signMap = new HashMap<>();
     long timestamp = System.currentTimeMillis()/1000;
     signMap.put("appkey", connectAppKey);
@@ -142,18 +140,17 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
         MaxConnectDTO.UserInfo responseObj = objectMapper.readValue(connection.getInputStream(),  MaxConnectDTO.UserInfo.class);
         String email = responseObj.getThird_party_info().getProfiles().getEmail();
         if (!Objects.equals(email, "")) {
-          System.out.println("email: " + email);
-          return email;
+          return responseObj;
         }
 
-        return "";
+        return null;
       } else {
         logger.error("GET请求未成功, url: " + connectTokenUri +"?"+params + ", responseCode: " + responseCode);
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-    return "";
+    return null;
   }
 
   public String getMaxConnectToken(String username) {

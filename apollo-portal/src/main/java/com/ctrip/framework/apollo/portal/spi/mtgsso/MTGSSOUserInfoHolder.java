@@ -35,7 +35,7 @@ public class MTGSSOUserInfoHolder implements UserInfoHolder {
   @Override
   public UserInfo getUser() {
     String userId = this.getCurrentUsername();
-    System.out.println("getUser 用户信息: "+ userId);
+    //System.out.println("getUser 用户信息: "+ userId);
     UserInfo userInfoFound = this.userService.findByUserId(userId);
     if (userInfoFound != null) {
       return userInfoFound;
