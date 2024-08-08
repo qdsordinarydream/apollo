@@ -16,8 +16,10 @@
  */
 directive_module.directive('apollonspanel', directive);
 
-function directive($window, $translate, toastr, AppUtil, EventManager, PermissionService, NamespaceLockService,
-    UserService, CommitService, ReleaseService, InstanceService, NamespaceBranchService, ConfigService) {
+let wantToModifyNs;
+
+function directive($rootScope, $window, $translate, toastr, AppUtil, EventManager, PermissionService, NamespaceLockService,
+    UserService, CommitService, ReleaseService, InstanceService, NamespaceBranchService, ConfigService, NamespaceService) {
     return {
         restrict: 'E',
         templateUrl: AppUtil.prefixPath() + '/views/component/namespace-panel.html',
@@ -73,6 +75,8 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
             scope.goToSyncPage = goToSyncPage;
             scope.goToDiffPage = goToDiffPage;
             scope.modifyByText = modifyByText;
+            scope.modifyByTextV2 = modifyByTextV2;
+            // 以前的检测
             scope.syntaxCheck = syntaxCheck;
             scope.goToParentAppConfigPage = goToParentAppConfigPage;
             scope.switchInstanceViewType = switchInstanceViewType;
@@ -84,12 +88,15 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
 
             scope.publish = publish;
             scope.mergeAndPublish = mergeAndPublish;
+            scope.clustersPublish = clustersPublish;
             scope.addRuleItem = addRuleItem;
             scope.editRuleItem = editRuleItem;
 
             scope.deleteNamespace = deleteNamespace;
             scope.exportNamespace = exportNamespace;
             scope.importNamespace = importNamespace;
+
+            scope.promptReview = promptReview;
 
             var subscriberId = EventManager.subscribe(EventManager.EventType.UPDATE_GRAY_RELEASE_RULES,
                 function (context) {
@@ -753,7 +760,74 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
                     + "&namespaceName=" + namespace.baseInfo.namespaceName;
             }
 
-            function modifyByText(namespace) {
+            function checkTxtValid(namespace) {
+                return new Promise(async (resolve, reject) => {
+                    let suffix = namespace.format;
+                    let itemVal = namespace.editText;
+                    let failed = false;
+
+                    try {
+                        if (suffix === 'yml' || suffix === 'yaml' || suffix === 'xml') {
+                            var model = {
+                                configText: itemVal,
+                                namespaceId: namespace.baseInfo.id,
+                                format: namespace.format
+                            };
+
+                            await ConfigService.syntax_check_text_v2(scope.appId,
+                                scope.env,
+                                scope.cluster,
+                                namespace.baseInfo.namespaceName,
+                                model).then(
+                                function (result) {
+                                },
+                                function (result) {
+                                    failed = true;
+                                    reject(failed);
+                                });
+                        } else if (suffix === 'json') {
+                            JSON.parse(itemVal);
+                        }
+                        resolve(!failed);
+                    } catch (e) {
+                        reject(false);
+                    }
+                });
+            }
+
+            async function modifyByTextV2(namespace) {
+                if (namespace.format === 'properties' || namespace.format === 'txt') {
+                    modifyByText(namespace);
+                    return
+                }
+
+                wantToModifyNs = null;
+                // check valid
+                try {
+                    let valid = await checkTxtValid(namespace)
+                    //console.log(valid)
+                    if (!valid) {
+                        wantToModifyNs = namespace;
+                        AppUtil.showModal('#syntaxCheckFailedDialogV2');
+                    } else {
+                        modifyByText(namespace);
+                    }
+                } catch (e) {
+                    wantToModifyNs = namespace;
+                    AppUtil.showModal('#syntaxCheckFailedDialogV2');
+                }
+            }
+
+            EventManager.subscribe(EventManager.EventType.SYNTAX_CHECK_TEXT_FAILED_V2, function (context) {
+                if (wantToModifyNs && wantToModifyNs.baseInfo && wantToModifyNs.baseInfo.namespaceName === scope.namespace.baseInfo.namespaceName) {
+                    //console.log(wantToModifyNs);
+                    modifyByText(wantToModifyNs);
+                    wantToModifyNs = null;
+                }
+            });
+
+            // 提交修改
+            async function modifyByText(namespace) {
 
                 var model = {
                     configText: namespace.editText,
@@ -761,14 +835,10 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
                     format: namespace.format
                 };
 
-                //prevent repeat submit
-                if (namespace.commitChangeBtnDisabled) {
-                    return;
-                }
                 namespace.commitChangeBtnDisabled = true;
                 ConfigService.modify_items(scope.appId,
                     scope.env,
-                    scope.cluster,
+                    namespace.baseInfo.clusterName,
                     namespace.baseInfo.namespaceName,
                     model).then(
                         function (result) {
@@ -916,7 +986,43 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
             }
 
             //normal release and gray release
+            // 通过 $translate 服务获取翻译后的值
+            // $translate('Config.EnvList').then(function (translation) {
+            //     $scope.envListTranslation = translation;
+            // });
+
+            function clustersPublish(namespace) {
+                // console.log('clustersPublish function triggered for scope: ', scope);
+                // console.log('rootScope: ', $rootScope);
+
+                if (!namespace.hasReleasePermission) {
+                    AppUtil.showModal('#releaseNoPermissionDialog');
+                    return;
+                } else if (namespace.lockOwner && scope.user == namespace.lockOwner) {
+                    //can not publish if config modified by himself
+                    EventManager.emit(EventManager.EventType.PUBLISH_DENY, {
+                        namespace: namespace,
+                        mergeAndPublish: false
+                    });
+                    return;
+                }
+
+                namespace.mergeAndPublish = false;
+                var envMapClusters = {};
+                envClusters = $rootScope.envMapClusters
+                EventManager.emit(EventManager.EventType.PUBLISH_NAMESPACE,
+                    {
+                        namespace: namespace,
+                        isClustersPublish: true,
+                        envClusters: envClusters
+                    });
+            }
+
             function publish(namespace) {
+                // console.log('Publish function triggered for scope: ', scope);
+                // console.log('pageContext: ', $rootScope.pageContext);
+                // console.log('$rootScope: ', $rootScope.envMapClusters);
+
                 if (!namespace.hasReleasePermission) {
                     AppUtil.showModal('#releaseNoPermissionDialog');
                     return;
@@ -967,6 +1073,20 @@ function directive($window, $translate, toastr, AppUtil, EventManager, Permissio
                 $window.location.href =
                     AppUtil.prefixPath() + '/apps/' + scope.appId + "/envs/" + scope.env + "/clusters/" + scope.cluster
                     + "/namespaces/" + namespace.baseInfo.namespaceName + "/items/export"
+            }
+
+            function promptReview(namespace){
+                console.log("namespace")
+                console.log(namespace)
+                NamespaceService.promptReview(scope.appId,
+                    scope.env,
+                    namespace.baseInfo.clusterName,
+                    namespace.baseInfo.namespaceName).then(
+                    function (result) {
+                        toastr.success($translate.instant('通知成功'));
+                    }, function (result) {
+                    }
+                )
             }
 
             function importNamespace(namespace) {

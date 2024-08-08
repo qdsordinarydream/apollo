@@ -220,9 +220,9 @@ public class AdminServiceAPI {
           changeSets, Void.class, appId, clusterName, namespace);
     }
 
-    public void updateItem(String appId, Env env, String clusterName, String namespace, long itemId, ItemDTO item) {
-      restTemplate.put(env, "apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/items/{itemId}",
-          item, appId, clusterName, namespace, itemId);
+    public void updateItem(String appId, Env env, String clusterName, String namespace, long itemId, ItemDTO item, boolean notCommit) {
+      restTemplate.put(env, "apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/items/{itemId}?notCommit={notCommit}",
+          item, appId, clusterName, namespace, itemId, notCommit);
 
     }
 

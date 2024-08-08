@@ -23,6 +23,7 @@ import com.ctrip.framework.apollo.portal.entity.po.UserPO;
 import com.ctrip.framework.apollo.portal.spi.LogoutHandler;
 import com.ctrip.framework.apollo.portal.spi.UserInfoHolder;
 import com.ctrip.framework.apollo.portal.spi.UserService;
+import com.ctrip.framework.apollo.portal.spi.mtgsso.MTGSSOUserService;
 import com.ctrip.framework.apollo.portal.spi.springsecurity.SpringSecurityUserService;
 import com.ctrip.framework.apollo.portal.util.checker.AuthUserPasswordChecker;
 import com.ctrip.framework.apollo.portal.util.checker.CheckResult;
@@ -78,6 +79,12 @@ public class UserInfoController {
       } else {
         ((SpringSecurityUserService) userService).update(user);
       }
+    } else if (userService instanceof MTGSSOUserService) {
+      if (isCreate) {
+        ((MTGSSOUserService) userService).create(user);
+      } else {
+        ((MTGSSOUserService) userService).update(user);
+      }
     } else {
       throw new UnsupportedOperationException("Create or update user operation is unsupported");
     }
@@ -88,6 +95,8 @@ public class UserInfoController {
   public void changeUserEnabled(@RequestBody UserPO user) {
     if (userService instanceof SpringSecurityUserService) {
       ((SpringSecurityUserService) userService).changeEnabled(user);
+    } else if (userService instanceof MTGSSOUserService) {
+      ((MTGSSOUserService) userService).changeEnabled(user);
     } else {
       throw new UnsupportedOperationException("change user enabled is unsupported");
     }

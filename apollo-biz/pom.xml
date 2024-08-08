@@ -58,5 +58,9 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-zookeeper-discovery</artifactId>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.ctrip.framework.apollo</groupId>
+            <artifactId>apollo-audit-annotation</artifactId>
+        </dependency>
+    </dependencies>
 </project>

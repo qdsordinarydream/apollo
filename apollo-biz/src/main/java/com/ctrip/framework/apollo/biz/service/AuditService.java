@@ -18,6 +18,7 @@ package com.ctrip.framework.apollo.biz.service;
 
 import com.ctrip.framework.apollo.biz.entity.Audit;
 import com.ctrip.framework.apollo.biz.repository.AuditRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,9 @@ import java.util.List;
 
 @Service
 public class AuditService {
+
+  @Value("${useAudit:false}")
+  private Boolean useAudit;
 
   private final AuditRepository auditRepository;
 
@@ -42,6 +46,10 @@ public class AuditService {
 
   @Transactional
   public void audit(String entityName, Long entityId, Audit.OP op, String owner) {
+    if (!useAudit) {
+      return;
+    }
+
     Audit audit = new Audit();
     audit.setEntityName(entityName);
     audit.setEntityId(entityId);

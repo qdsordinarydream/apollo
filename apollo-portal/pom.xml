@@ -33,6 +33,24 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.alibaba.csp</groupId>
+			<artifactId>sentinel-core</artifactId>
+			<version>1.6.1</version>
+		</dependency>
+
+<!--		钉钉openapi-->
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>alibaba-dingtalk-service-sdk</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>dingtalk</artifactId>
+			<version>2.0.18</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-ldap</artifactId>
 		</dependency>

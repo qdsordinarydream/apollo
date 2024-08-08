@@ -29,6 +29,11 @@ import com.ctrip.framework.apollo.portal.service.ItemService;
 import com.ctrip.framework.apollo.portal.spi.UserService;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+
+import com.ctrip.framework.apollo.tracer.Tracer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -50,6 +55,8 @@ import javax.validation.constraints.PositiveOrZero;
 @RestController("openapiItemController")
 @RequestMapping("/openapi/v1/envs/{env}")
 public class ItemController {
+  @Autowired
+  private MeterRegistry meterRegistry;
 
   private final ItemService itemService;
   private final UserService userService;
@@ -96,6 +103,14 @@ public class ItemController {
       throw new BadRequestException("Comment length should not exceed %s characters", ITEM_COMMENT_MAX_LENGTH);
     }
 
+    // 监控
+    try {
+      meterRegistry.counter("item_openapi_create_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", item.getDataChangeCreatedBy())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item create metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     return this.itemOpenApiService.createItem(appId, env, clusterName, namespaceName, item);
   }
 
@@ -120,6 +135,14 @@ public class ItemController {
 
     if (!StringUtils.isEmpty(item.getComment()) && item.getComment().length() > ITEM_COMMENT_MAX_LENGTH) {
       throw new BadRequestException("Comment length should not exceed %s characters", ITEM_COMMENT_MAX_LENGTH);
+    }
+
+    // 监控
+    try {
+      meterRegistry.counter("item_openapi_update_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", item.getDataChangeLastModifiedBy())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item update metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
     }
 
     if (createIfNotExists) {

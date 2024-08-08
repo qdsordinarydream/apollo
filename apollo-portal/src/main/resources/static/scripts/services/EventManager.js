@@ -128,7 +128,8 @@ appService.service('EventManager', [function () {
             PRE_IMPORT_NAMESPACE: 'pre_import_namespace',
             DELETE_NAMESPACE: 'delete_namespace',
             CHANGE_ENV_CLUSTER: "change_env_cluster",
-            SYNTAX_CHECK_TEXT_FAILED: "syntax_check_text_failed"
+            SYNTAX_CHECK_TEXT_FAILED: "syntax_check_text_failed",
+            SYNTAX_CHECK_TEXT_FAILED_V2: "syntax_check_text_failed_v2"
         }
 
     }

@@ -16,9 +16,12 @@
  */
 package com.ctrip.framework.apollo.portal.listener;
 
+import com.ctrip.framework.apollo.portal.entity.bo.ItemBO;
 import com.ctrip.framework.apollo.portal.environment.Env;
 
 import org.springframework.context.ApplicationEvent;
+
+import java.util.List;
 
 public class ConfigPublishEvent extends ApplicationEvent {
 
@@ -88,6 +91,11 @@ public class ConfigPublishEvent extends ApplicationEvent {
     return this;
   }
 
+  public ConfigPublishEvent setChangeItems(List<ItemBO> changeItems) {
+    configPublishInfo.setChangeItems(changeItems);
+    return this;
+  }
+
 
   public static class ConfigPublishInfo {
 
@@ -101,6 +109,7 @@ public class ConfigPublishEvent extends ApplicationEvent {
     private boolean isMergeEvent;
     private boolean isNormalPublishEvent;
     private boolean isGrayPublishEvent;
+    private List<ItemBO> changeItems;
 
     public Env getEnv() {
       return Env.valueOf(env);
@@ -180,6 +189,14 @@ public class ConfigPublishEvent extends ApplicationEvent {
 
     public void setGrayPublishEvent(boolean grayPublishEvent) {
       isGrayPublishEvent = grayPublishEvent;
+    }
+
+    public List<ItemBO> getChangeItems() {
+      return changeItems;
+    }
+
+    public void setChangeItems(List<ItemBO> changeItems) {
+      this.changeItems = changeItems;
     }
   }
 }

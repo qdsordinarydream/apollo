@@ -66,6 +66,10 @@ appService.service("ConfigService", ['$resource', '$q', 'AppUtil', function ($re
             method: 'POST',
             url: AppUtil.prefixPath() + '/apps/:appId/envs/:env/clusters/:clusterName/namespaces/:namespaceName/syntax-check'
         },
+        syntax_check_text_v2: {
+            method: 'POST',
+            url: AppUtil.prefixPath() + '/apps/:appId/envs/:env/clusters/:clusterName/namespaces/:namespaceName/syntax-check-v2'
+        },
         revoke_item: {
             method: 'PUT',
             url: AppUtil.prefixPath() + '/apps/:appId/envs/:env/clusters/:clusterName/namespaces/:namespaceName/revoke-items'
@@ -228,6 +232,23 @@ appService.service("ConfigService", ['$resource', '$q', 'AppUtil', function ($re
                                            namespaceName: namespaceName
                                        },
                                        model, function (result) {
+                    d.resolve(result);
+
+                }, function (result) {
+                    d.reject(result);
+                });
+            return d.promise;
+        },
+
+        syntax_check_text_v2: function (appId, env, clusterName, namespaceName, model) {
+            var d = $q.defer();
+            config_source.syntax_check_text_v2({
+                    appId: appId,
+                    env: env,
+                    clusterName: clusterName,
+                    namespaceName: namespaceName
+                },
+                model, function (result) {
                     d.resolve(result);
 
                 }, function (result) {

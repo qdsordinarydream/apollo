@@ -35,6 +35,16 @@ public class ReleaseDTO extends BaseDTO{
 
   private boolean isAbandoned;
 
+  private ItemChangeSets itemChangeSets;
+
+  public ItemChangeSets getItemChangeSets() {
+    return itemChangeSets;
+  }
+
+  public void setItemChangeSets(ItemChangeSets itemChangeSets) {
+    this.itemChangeSets = itemChangeSets;
+  }
+
   public long getId() {
     return id;
   }

@@ -51,6 +51,9 @@ public class ItemsComparator {
         copiedItem.setNamespaceId(baseNamespaceId);
         changeSets.addCreateItem(copiedItem);
       }else if (!Objects.equals(sourceItem.getValue(), item.getValue())){//update
+        //先记录更新前的值
+        System.out.printf("compareIgnoreBlankAndCommentItem update key = %s, oldValue = %s, newValue = %s \n", sourceItem.getKey(), sourceItem.getValue(), item.getValue());
+        changeSets.addUpdateItemsBefore(new ItemDTO(sourceItem.getKey(), sourceItem.getValue(), sourceItem.getComment(), sourceItem.getLineNum()));
         //only type & value & comment can be update
         sourceItem.setType(item.getType());
         sourceItem.setValue(item.getValue());
@@ -94,6 +97,7 @@ public class ItemsComparator {
     copiedItem.setType(sourceItem.getType());
     copiedItem.setValue(sourceItem.getValue());
     copiedItem.setComment(sourceItem.getComment());
+    copiedItem.setDataChangeLastModifiedBy(sourceItem.getDataChangeLastModifiedBy());
     return copiedItem;
 
   }

@@ -76,7 +76,8 @@ public class ServerItemOpenApiService implements ItemOpenApiService {
     toUpdateItem.setValue(itemDTO.getValue());
     toUpdateItem.setDataChangeLastModifiedBy(itemDTO.getDataChangeLastModifiedBy());
 
-    itemService.updateItem(appId, Env.valueOf(env), clusterName, namespaceName, toUpdateItem);
+    // openapi 写入就不需要提交 commit 记录
+    itemService.updateItem(appId, Env.valueOf(env), clusterName, namespaceName, toUpdateItem, true);
   }
 
   @Override

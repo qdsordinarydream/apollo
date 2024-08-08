@@ -31,6 +31,10 @@ import com.ctrip.framework.apollo.portal.entity.vo.NamespaceIdentifier;
 import com.ctrip.framework.apollo.portal.service.ItemService;
 import com.ctrip.framework.apollo.portal.service.NamespaceService;
 import com.ctrip.framework.apollo.portal.spi.UserInfoHolder;
+import com.ctrip.framework.apollo.tracer.Tracer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -48,17 +52,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static com.ctrip.framework.apollo.common.utils.RequestPrecondition.checkModel;
 
 @RestController
 public class ItemController {
+  @Autowired
+  private MeterRegistry meterRegistry;
 
   private final ItemService configService;
   private final NamespaceService namespaceService;
@@ -79,6 +89,14 @@ public class ItemController {
   public void modifyItemsByText(@PathVariable String appId, @PathVariable String env,
                                 @PathVariable String clusterName, @PathVariable String namespaceName,
                                 @RequestBody NamespaceTextModel model) {
+    // 监控
+    try {
+        meterRegistry.counter("item_update_total", Tags.of("appId", appId, "env", env, "cluster",
+                clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+        Tracer.logError(String.format("item update metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     model.setAppId(appId);
     model.setClusterName(clusterName);
     model.setEnv(env);
@@ -103,6 +121,14 @@ public class ItemController {
     item.setDataChangeCreatedTime(null);
     item.setDataChangeLastModifiedTime(null);
 
+    // 监控
+    try {
+      meterRegistry.counter("item_create_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item create metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     return configService.createItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
   }
 
@@ -113,10 +139,18 @@ public class ItemController {
                          @RequestBody ItemDTO item) {
     checkModel(isValidItem(item));
 
+    // 监控
+    try {
+      meterRegistry.counter("item_update_total", Tags.of("appId", appId, "env", env, "cluster",
+              clusterName, "namespace", namespaceName, "operator", userInfoHolder.getUser().getUserId())).increment();
+    } catch (Exception e) {
+      Tracer.logError(String.format("item update metrics: %s+%s+%s+%s", appId, env, clusterName, namespaceName), e);
+    }
+
     String username = userInfoHolder.getUser().getUserId();
     item.setDataChangeLastModifiedBy(username);
 
-    configService.updateItem(appId, Env.valueOf(env), clusterName, namespaceName, item);
+    configService.updateItem(appId, Env.valueOf(env), clusterName, namespaceName, item, false);
   }
 
 
@@ -229,6 +263,16 @@ public class ItemController {
     return ResponseEntity.ok().build();
   }
 
+    @PostMapping(value = "/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/syntax-check-v2", consumes = {
+            "application/json"})
+    public ResponseEntity<Void> syntaxCheckTextV2(@PathVariable String appId, @PathVariable String env,
+                                                @PathVariable String clusterName, @PathVariable String namespaceName, @RequestBody NamespaceTextModel model) {
+
+        doSyntaxCheckV2(model);
+
+        return ResponseEntity.ok().build();
+    }
+
   @PreAuthorize(value = "@permissionValidator.hasModifyNamespacePermission(#appId, #namespaceName, #env)")
   @PutMapping("/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/revoke-items")
   public void revokeItems(@PathVariable String appId, @PathVariable String env, @PathVariable String clusterName,
@@ -254,6 +298,41 @@ public class ItemController {
       yamlPropertiesFactoryBean.getObject();
     }catch (Exception ex){
       throw new BadRequestException(ex.getMessage());
+    }
+  }
+
+  void doSyntaxCheckV2(NamespaceTextModel model) {
+    if (StringUtils.isBlank(model.getConfigText())) {
+      return;
+    }
+
+    if (model.getFormat() == ConfigFileFormat.YAML || model.getFormat() == ConfigFileFormat.YML) {
+      try {
+        Yaml yl = new Yaml();
+        Map<Object, Objects> objectsMap = yl.load(model.getConfigText());
+        System.out.println("返回结果：" + objectsMap);
+
+      }catch (Exception ex) {
+        throw new BadRequestException("无效的YAML内容");
+      }
+    } else if (model.getFormat() == ConfigFileFormat.XML) {
+      if (!isValidXML(model.getConfigText())) {
+        throw new BadRequestException("无效XML内容");
+      }
+    } else {
+      throw new BadRequestException("不支持的类型");
+    }
+
+  }
+
+  public static boolean isValidXML(String xmlString) {
+    try {
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.parse(new org.xml.sax.InputSource(new java.io.StringReader(xmlString)));
+      return true;
+    } catch (Exception e) {
+      return false;
     }
   }
 

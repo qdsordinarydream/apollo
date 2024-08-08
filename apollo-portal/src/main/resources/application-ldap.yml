@@ -1,0 +1,14 @@
+spring:
+  ldap:
+    base: "ou=acs,dc=mobvista,dc=com"
+    username: "uid=gateway,ou=open,dc=mobvista,dc=com"
+    password: "safdERTFGHewaPuljlpFSD"
+    searchFilter: "(uid={0})"
+    urls:
+      - "ldap://acsldap.mobvista.com:389"
+ldap:
+  mapping:
+    objectClass: "inetOrgPerson"
+    loginId: "uid"
+    userDisplayName: "cn"
+    email: "mail"

@@ -394,7 +394,7 @@ public class ConfigsImportService {
           ItemDTO oldItem = itemService.loadItem(env, appId, clusterName, namespaceName, key);
           newItem.setId(oldItem.getId());
           //existed
-          itemService.updateItem(appId, env, clusterName, namespaceName, newItem);
+          itemService.updateItem(appId, env, clusterName, namespaceName, newItem, false);
         } catch (Exception e) {
           if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException) e).getStatusCode()
               .equals(HttpStatus.NOT_FOUND)) {
