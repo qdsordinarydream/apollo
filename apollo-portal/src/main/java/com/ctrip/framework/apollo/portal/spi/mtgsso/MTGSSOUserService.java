@@ -37,6 +37,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -84,7 +85,7 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
       throw new UsernameNotFoundException("User " + username + " was not found in the database");
     }
 
-    UserPO user = userRepository.findByUsername(username);
+    UserPO user = userRepository.findByUsername(userInfo);
     if (user == null) {
       user = new UserPO();
       user.setPassword("configcenter_default");
@@ -137,10 +138,11 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
       connection.setRequestMethod("GET");
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         MaxConnectDTO.UserInfo responseObj = objectMapper.readValue(connection.getInputStream(),  MaxConnectDTO.UserInfo.class);
         String email = responseObj.getThird_party_info().getProfiles().getEmail();
         if (!Objects.equals(email, "")) {
+          System.out.println("email: " + email);
           return email;
         }
 
@@ -171,8 +173,7 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
       connection.setRequestMethod("GET");
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
-        ObjectMapper objectMapper = new ObjectMapper();
-
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         MaxConnectDTO.MaxConnectTokenDTO responseObj = objectMapper.readValue(connection.getInputStream(),  MaxConnectDTO.MaxConnectTokenDTO.class);
         if (!Objects.equals(responseObj.getAccess_token(), "")) {
           return responseObj.getAccess_token();

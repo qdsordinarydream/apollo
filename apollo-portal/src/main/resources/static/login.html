@@ -25,7 +25,6 @@
     <style type="text/css">
 
         body {
-            padding-top: 90px;
             background: #F7F7F7;
             color: #666666;
             font-family: 'Roboto', sans-serif;
@@ -196,26 +195,6 @@
             border-color: #ccc;
         }
 
-        .btn-login {
-            background-color: #E8E9EC;
-            outline: none;
-            color: #2D3B55;
-            font-size: 14px;
-            height: auto;
-            font-weight: normal;
-            padding: 14px 0;
-            text-transform: uppercase;
-            border: none;
-            border-radius: 0px;
-            box-shadow: none;
-        }
-
-        .btn-login:hover,
-        .btn-login:focus {
-            color: #fff;
-            background-color: #2D3B55;
-        }
-
         .forgot-password {
             text-decoration: underline;
             color: #888;
@@ -247,12 +226,53 @@
             background-color: #2D3B55;
         }
 
+        /* 最新代码 */
+        .btn-login {
+            background-color: #E8E9EC;
+            outline: none;
+            color: #2D3B55;
+            font-size: 14px;
+            height: auto;
+            width: 100%;
+            font-weight: normal;
+            padding: 14px 0;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .btn-login:hover,
+        .btn-login:focus {
+            color: #fff;
+            background-color: #2D3B55;
+        }
+        .login-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
     </style>
 </head>
 <body>
 
 <div class="container" ng-controller="LoginController">
-    <div class="row">
+    <div class="login-container">
+        <div class="panel panel-login">
+            <div class="panel-body">
+                <div id="login-form">
+                    <p class="text-center"><img src="img/logo-detail.png" width="100%" style="max-width: 500px"></p>
+                </div>
+                <p style="padding: 10px 20px;">
+                    <button class="btn-login ng-binding">{{'Login.Login' | translate }}</button>
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="row">
         <div class="col-md-6 col-md-offset-3">
             <div class="panel panel-login">
                 <div class="panel-body">
@@ -261,17 +281,17 @@
                             <form id="login-form" action="signin" method="post" role="form" style="display: block;">
                                 <p class="text-center"><img src="img/logo-detail.png" style="width: 500px;"></p>
                                 <div class="form-group">
-                                    <input type="text" name="username" tabindex="1" class="form-control"
+                                    <input type="hidden" id="username" name="username" tabindex="1" class="form-control"
                                            placeholder="Username" value="">
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" name="password" tabindex="2"
-                                           class="form-control" placeholder="Password">
+                                    <input type="hidden" name="password" tabindex="2"
+                                           class="form-control" placeholder="Password" value="apollo">
                                 </div>
                                 <div class="form-group" style="color: red">
                                     <small ng-bind="info"></small>
                                 </div>
-                                <div class="col-xs-12 form-group pull-right">
+                                <div class="col-xs-12 pull-right">
                                     <input type="submit" name="login-submit" id="login-submit" tabindex="4"
                                            class="form-control btn btn-login" value="{{'Login.Login' | translate }}">
                                 </div>
@@ -281,7 +301,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 </div>
 <!-- jquery.js -->
 <script src="vendor/jquery.min.js" type="text/javascript"></script>
@@ -336,6 +356,60 @@
             $(this).addClass('active');
             e.preventDefault();
         });
+
+        function loginMaxConnect(routePath = '/login.html', refer = '') {
+            const appKey = "e0046a3ed06ea274b184e9c6a2c8253d"
+            const url = window.location.origin + routePath
+            window.location.href = `https://connect.spotmaxtech.com/api/v1/connect/authorize?appkey=${appKey}&redirect_uri=${encodeURIComponent(url)}&state=${encodeURIComponent(refer)}`
+        }
+
+        $('.btn-login').click(function (e) {
+            loginMaxConnect()
+        })
+
+        function login(code) {
+            const formData = new FormData()
+            formData.append('username', code)
+            formData.append('password', 'apollo')
+
+            $.ajax({
+                method: 'post',
+                async: false,
+                processData: false,
+                contentType: false,
+                data: formData,
+                url: 'signin',
+                success: function (res) {
+                    console.log('登录成功')
+                    window.location.href = window.localStorage.getItem('prefixPath') + '/index.html'
+                },
+                error: function(err) {
+                    window.alert(err.message || '登录失败，请重试')
+                }
+            })
+        }
+
+        function getQueryParam(param) {
+            var url = window.location.href;
+            var params = url.substring(url.indexOf('?') + 1).split('&');
+            for (var i = 0; i < params.length; i++) {
+                var pair = params[i].split('=');
+                if (pair[0] === param) {
+                    return decodeURIComponent(pair[1]);
+                }
+            }
+            return null;
+        }
+
+        function beforeLogin() {
+            var code = getQueryParam('code');
+            console.log(code);
+            if(code !== undefined && code !== null) {
+                login(code)
+            }
+        }
+
+        beforeLogin()
     });
 
 </script>
