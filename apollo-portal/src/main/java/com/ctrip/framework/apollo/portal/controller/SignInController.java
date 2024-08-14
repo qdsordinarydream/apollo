@@ -16,6 +16,8 @@
  */
 package com.ctrip.framework.apollo.portal.controller;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,14 +28,21 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 public class SignInController {
+    @Value("${TestEnvTag:false}")
+    private Boolean testEnvTag;
 
-  @GetMapping("/signin")
-  public String login(@RequestParam(value = "error", required = false) String error,
-                      @RequestParam(value = "logout", required = false) String logout,
-                      @RequestParam(value = "code", required = false) String code,
-                      RedirectAttributes redirectAttributes) {
-    redirectAttributes.addAttribute("code", code);
-    return "redirect:/login.html";
-  }
+    @GetMapping("/signin")
+    public String login(@RequestParam(value = "error", required = false) String error,
+                        @RequestParam(value = "logout", required = false) String logout,
+                        @RequestParam(value = "code", required = false) String code,
+                        RedirectAttributes redirectAttributes) {
+        redirectAttributes.addAttribute("code", code);
+        return "redirect:/login.html";
+    }
 
+    @GetMapping("/api/env")
+    public ResponseEntity<Boolean> getTestEnvTag() {
+        System.out.println("getTestEnvTag: " + testEnvTag);
+        return ResponseEntity.ok(testEnvTag);
+    }
 }

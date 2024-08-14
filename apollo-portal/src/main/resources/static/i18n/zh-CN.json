@@ -334,6 +334,7 @@
   "Component.Rollback.OpRollback": "回滚",
   "Component.ShowText.Title": "查看",
   "Login.Login": "登录",
+  "Login.LoginMTG": "账号中心登陆",
   "Login.UserNameOrPasswordIncorrect": "用户名或密码错误",
   "Login.LogoutSuccessfully": "登出成功",
   "Index.MyProject": "我的应用",

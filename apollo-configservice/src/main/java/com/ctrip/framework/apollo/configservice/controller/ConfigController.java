@@ -100,6 +100,9 @@ public class ConfigController {
     List<Release> releases = Lists.newLinkedList();
 
     String appClusterNameLoaded = clusterName;
+
+    System.out.println("request :" + appId + " " + clusterName + " " + namespace + " " + dataCenter + " " + clientSideReleaseKey + " " + clientIp + " " + clientLabel + " " + messagesAsString);
+
     if (!ConfigConsts.NO_APPID_PLACEHOLDER.equalsIgnoreCase(appId)) {
       Release currentAppRelease = configService.loadConfig(appId, clientIp, clientLabel, appId, clusterName, namespace,
           dataCenter, clientMessages);

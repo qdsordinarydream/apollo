@@ -99,6 +99,7 @@ public class ItemService {
 
         // In case someone constructs an attack scenario
         if (model.getNamespaceId() != namespaceId) {
+            System.out.println("namespaceId: " + namespaceId + ", model.getNamespaceId(): " + model.getNamespaceId());
             throw BadRequestException.namespaceNotExists();
         }
 

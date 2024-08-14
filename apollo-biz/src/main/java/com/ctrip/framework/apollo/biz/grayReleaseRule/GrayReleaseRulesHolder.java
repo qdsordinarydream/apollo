@@ -229,11 +229,14 @@ public class GrayReleaseRulesHolder implements ReleaseMessageListener, Initializ
     if (ruleCache.getBranchStatus() == NamespaceBranchStatus.ACTIVE) {
       for (GrayReleaseRuleItemDTO ruleItemDTO : ruleCache.getRuleItems()) {
         for (String clientIp : ruleItemDTO.getClientIpList()) {
-          reversedGrayReleaseRuleCache.put(assembleReversedGrayReleaseRuleKey(ruleItemDTO
-              .getClientAppId(), ruleCache.getNamespaceName(), clientIp), ruleCache.getRuleId());
+          String ipRuleKey = assembleReversedGrayReleaseRuleKey(ruleItemDTO
+                  .getClientAppId(), ruleCache.getNamespaceName(), clientIp);
+          System.out.println("写入cache, IpKey:["+ ipRuleKey + "]" );
+          reversedGrayReleaseRuleCache.put(ipRuleKey, ruleCache.getRuleId());
         }
       }
     }
+    System.out.println("写入cache, key:["+ key + "]" );
     grayReleaseRuleCache.put(key, ruleCache);
   }
 

@@ -88,7 +88,7 @@ public class AuthConfiguration {
 
   private static final String[] BY_PASS_URLS = {"/prometheus/**", "/metrics/**", "/openapi/**",
       "/vendor/**", "/styles/**", "/scripts/**", "/views/**", "/img/**", "/i18n/**", "/prefix-path",
-      "/health", "/login.html", "/signin/**"};
+      "/health", "/login.html", "/signin/**", "/api/env"};
 
   /**
    * spring.profiles.active = auth
@@ -165,7 +165,7 @@ public class AuthConfiguration {
 
   }
 
-  @Order(99)
+  @Order(98)
   @Profile("auth")
   @Configuration
   @EnableWebSecurity
@@ -470,7 +470,7 @@ public class AuthConfiguration {
     }
   }
 
-  @Order(99)
+  @Order(98)
   @Profile("mtgsso")
   @Configuration
   @EnableWebSecurity

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -74,32 +75,20 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
   }
 
   @Override
-  public UserDetails loadUserByUsername(String authcode) throws UsernameNotFoundException {
-    MaxConnectDTO.UserInfo userInfo = getUserInfo(authcode);
-    if (userInfo == null || Objects.equals(userInfo.getThird_party_info().getProfiles().getEmail(), "")) {
-      throw new UsernameNotFoundException("User " + authcode + " was not found in the database");
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    try {
+      return findUserBySSO(username);
+    } catch (Exception e) {
+      System.out.println("try to find user by normal way");
     }
-    System.out.println("user info: " + userInfo.getThird_party_info().getProfiles());
 
-    String username = userInfo.getThird_party_info().getProfiles().getEmail();
-    String userDisplayName = userInfo.getThird_party_info().getProfiles().getUsername();
+    // test environment need to check the user info
     UserPO user = userRepository.findByUsername(username);
     if (user == null) {
-      user = new UserPO();
-      user.setUsername(username);
-      user.setPassword("configcenter_default");
-      user.setEmail(username);
-      user.setUserDisplayName(userDisplayName);
-      user.setEnabled(1);
-      this.create(user);
-
-      // 重新查询
-      user = userRepository.findByUsername(username);
-      //throw new UsernameNotFoundException("User " + username + " was not found in the database");
-      System.out.println("user 不存在，被创建");
+        throw new UsernameNotFoundException("User " + username + " was not found in the database");
     }
 
-    return new org.springframework.security.core.userdetails.User(
+    return new User(
             user.getUsername(),
             user.getPassword(),
             true,
@@ -109,6 +98,43 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
             AuthorityUtils.createAuthorityList("ROLE_user")
     );
   };
+
+  public User findUserBySSO(String authcode) {
+    MaxConnectDTO.UserInfo userInfo = getUserInfo(authcode);
+    if (userInfo == null || Objects.equals(userInfo.getThird_party_info().getProfiles().getEmail(), "")) {
+      throw new UsernameNotFoundException("User " + authcode + " was not found in the database");
+    }
+    String username = userInfo.getThird_party_info().getProfiles().getEmail();
+    String userDisplayName = userInfo.getThird_party_info().getProfiles().getUsername();
+
+    // find by mtg email
+    UserPO user = userRepository.findByUsername(username);
+
+    // if user not exist, create a new user
+    if (user == null) {
+      System.out.println("create new user: " +username);
+      user = new UserPO();
+      user.setUsername(username);
+      user.setPassword("configcenter_default");
+      user.setEmail(username);
+      user.setUserDisplayName(userDisplayName);
+      user.setEnabled(1);
+      this.create(user);
+
+      // reload userInfo
+      user = userRepository.findByUsername(username);
+    }
+
+    System.out.println(user);
+    return new User(
+              user.getUsername(),
+              user.getPassword(),
+              true,
+              true,
+              true,
+              true,
+              AuthorityUtils.createAuthorityList("ROLE_user"));
+  }
 
   public MaxConnectDTO.UserInfo getUserInfo(String authcode) {
     String token = getMaxConnectToken(authcode);
@@ -125,7 +151,7 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
     signMap.put("access_token", token);
     signMap.put("timestamp", Long.toString(timestamp));
     String sign = generateSignature(signMap, connectAppSecret);
-    
+
     try {
       String params = String.format("appkey=%s&access_token=%s&timestamp=%s&sign=%s",
               connectAppKey, token, timestamp, sign);
@@ -145,7 +171,7 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
 
         return null;
       } else {
-        logger.error("GET请求未成功, url: " + connectTokenUri +"?"+params + ", responseCode: " + responseCode);
+        logger.error("user请求未成功, url: " + connectTokenUri +"?"+params + ", responseCode: " + responseCode);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -259,13 +285,13 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
 
   @Override
   public List<UserInfo> searchUsers(String keyword, int offset, int limit,
-      boolean includeInactiveUsers) {
+                                    boolean includeInactiveUsers) {
     List<UserPO> users = this.findUsers(keyword, includeInactiveUsers);
     if (CollectionUtils.isEmpty(users)) {
       return Collections.emptyList();
     }
     return users.stream().map(UserPO::toUserInfo)
-        .collect(Collectors.toList());
+            .collect(Collectors.toList());
   }
 
   private List<UserPO> findUsers(String keyword, boolean includeInactiveUsers) {
@@ -284,7 +310,7 @@ public class MTGSSOUserService implements UserService, UserDetailsService {
       }
       byUsername = userRepository.findByUsernameLikeAndEnabled("%" + keyword + "%", 1);
       byUserDisplayName = userRepository
-          .findByUserDisplayNameLikeAndEnabled("%" + keyword + "%", 1);
+              .findByUserDisplayNameLikeAndEnabled("%" + keyword + "%", 1);
     }
     if (!CollectionUtils.isEmpty(byUsername)) {
       for (UserPO user : byUsername) {
