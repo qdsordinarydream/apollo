@@ -149,7 +149,6 @@ public class ConfigFileController implements ReleaseMessageListener {
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) throws IOException {
 
-    System.out.println("requeset1: " + appId + " " + clusterName + " " + namespace + " " + dataCenter + " " + clientIp + " " + clientLabel);
     String result =
         queryConfig(ConfigFileOutputFormat.JSON, appId, clusterName, namespace, dataCenter,
             clientIp, clientLabel, request, response);
@@ -182,7 +181,6 @@ public class ConfigFileController implements ReleaseMessageListener {
     //2. try to load gray release and return
     if (hasGrayReleaseRule) {
       Tracer.logEvent("ConfigFile.Cache.GrayRelease", cacheKey);
-      System.out.println("requeset2: " + appId + " " + clusterName + " " + namespace + " " + dataCenter + " " + clientIp + " " + clientLabel);
       return loadConfig(outputFormat, appId, clusterName, namespace, dataCenter, clientIp, clientLabel,
           request, response);
     }
@@ -193,7 +191,6 @@ public class ConfigFileController implements ReleaseMessageListener {
     //4. if not exists, load from ConfigController
     if (Strings.isNullOrEmpty(result)) {
       Tracer.logEvent("ConfigFile.Cache.Miss", cacheKey);
-      System.out.println("requeset3: " + appId + " " + clusterName + " " + namespace + " " + dataCenter + " " + clientIp + " " + clientLabel);
       result = loadConfig(outputFormat, appId, clusterName, namespace, dataCenter, clientIp, clientLabel,
           request, response);
 
